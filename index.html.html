@@ -1,0 +1,608 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body,div,span,input,select,textarea,button,table,th,td{font-family:var(--font-sans)}
+:root{
+  --bg:#1e2a3a;--bg2:#243348;--bg3:#2c3e55;
+  --surface:#2d3f56;--surface2:#344a63;
+  --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.16);
+  --text1:#e8edf3;--text2:#8fa3bb;--text3:#6180a0;
+  --accent:#5b8dee;--accent2:#3a6fd8;
+  --green:#2ecc8e;--red:#e05c6a;--amber:#e8a94a;--purple:#9c7fe8;
+}
+.app{padding:1.25rem 1rem;direction:rtl;background:var(--bg);min-height:100vh}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding:.75rem 1rem;background:var(--bg2);border-radius:12px;border:.5px solid var(--border)}
+.topbar-left h1{font-size:18px;font-weight:500;color:var(--text1);display:flex;align-items:center;gap:8px}
+.topbar-left p{font-size:12px;color:var(--text2);margin-top:3px}
+.topbar-left i{color:var(--accent)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.sc{background:var(--bg2);border-radius:10px;padding:.75rem 1rem;text-align:center;border:.5px solid var(--border)}
+.sc-n{font-size:24px;font-weight:500;color:var(--text1)}
+.sc-l{font-size:11px;color:var(--text2);margin-top:2px}
+.tabs{display:flex;gap:4px;margin-bottom:1.25rem;background:var(--bg2);padding:5px;border-radius:10px;border:.5px solid var(--border)}
+.tab{flex:1;padding:7px 10px;font-size:13px;cursor:pointer;color:var(--text2);border:none;background:transparent;border-radius:8px;transition:all .15s;font-family:var(--font-sans);text-align:center}
+.tab.on{background:var(--accent);color:#fff;font-weight:500}
+.tab:hover:not(.on){background:var(--bg3);color:var(--text1)}
+.pane{display:none}.pane.on{display:block}
+.card{background:var(--surface);border-radius:12px;border:.5px solid var(--border);padding:1.25rem;margin-bottom:1rem}
+.sec{font-size:11px;font-weight:500;color:var(--text3);letter-spacing:.5px;margin-bottom:.6rem;padding-bottom:.4rem;border-bottom:.5px solid var(--border);text-transform:uppercase}
+.fg{display:grid;gap:9px;margin-bottom:9px}
+.g2{grid-template-columns:1fr 1fr}
+.g3{grid-template-columns:1fr 1fr 1fr}
+.g4{grid-template-columns:1fr 1fr 1fr 1fr}
+.g1{grid-template-columns:1fr}
+.fl{display:flex;flex-direction:column;gap:4px}
+.fl label{font-size:11px;color:var(--text2);font-weight:500}
+input,select,textarea{width:100%;padding:8px 10px;border:.5px solid var(--border2);border-radius:8px;font-size:13px;background:var(--bg3);color:var(--text1);font-family:var(--font-sans);transition:border .15s}
+input::placeholder{color:var(--text3)}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+select option{background:var(--bg2);color:var(--text1)}
+textarea{min-height:60px;resize:vertical}
+.btn{padding:7px 14px;border-radius:8px;font-size:13px;cursor:pointer;transition:all .15s;font-family:var(--font-sans);font-weight:500}
+.btn-primary{background:var(--accent);color:#fff;border:none}
+.btn-primary:hover{background:var(--accent2)}
+.btn-sm{padding:5px 11px;font-size:12px}
+.btn-outline{background:transparent;color:var(--text1);border:.5px solid var(--border2)}
+.btn-outline:hover{background:var(--bg3)}
+.btn-green{background:var(--green);color:#04342C;border:none}
+.btn-green:hover{opacity:.9}
+.btn-red-sm{background:transparent;color:var(--red);border:.5px solid var(--red);font-size:12px;padding:4px 9px;border-radius:7px;cursor:pointer;font-family:var(--font-sans)}
+.btn-red-sm:hover{background:rgba(224,92,106,.12)}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;padding-top:12px;border-top:.5px solid var(--border)}
+.search-row{display:flex;gap:8px;margin-bottom:1rem;align-items:center}
+.search-row input{flex:1}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed}
+th{text-align:right;padding:8px;color:var(--text2);font-weight:500;font-size:11px;border-bottom:.5px solid var(--border);white-space:nowrap;letter-spacing:.3px}
+td{padding:9px 8px;border-bottom:.5px solid var(--border);color:var(--text1);vertical-align:middle;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+tr:hover td{background:var(--surface2);cursor:pointer}
+.badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:500}
+.bg{background:rgba(46,204,142,.15);color:#2ecc8e}
+.ba{background:rgba(232,169,74,.15);color:#e8a94a}
+.br{background:rgba(224,92,106,.15);color:#e05c6a}
+.bb{background:rgba(91,141,238,.15);color:#7aabf5}
+.bp{background:rgba(156,127,232,.15);color:#b8a0f0}
+.bt{background:rgba(46,204,200,.15);color:#2eccc8}
+.empty-state{text-align:center;padding:2rem;color:var(--text2);font-size:13px}
+.profile-wrap{background:var(--surface);border:.5px solid var(--border);border-radius:12px;padding:1.25rem}
+.profile-hdr{display:flex;align-items:center;gap:14px;padding-bottom:1rem;border-bottom:.5px solid var(--border);margin-bottom:1rem}
+.avatar{width:50px;height:50px;border-radius:50%;background:rgba(91,141,238,.25);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:500;color:var(--accent);flex-shrink:0;border:.5px solid rgba(91,141,238,.4)}
+.profile-hdr h2{font-size:16px;font-weight:500;color:var(--text1)}
+.profile-hdr p{font-size:12px;color:var(--text2);margin-top:3px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;font-size:12px;margin-bottom:1rem}
+.ir label{color:var(--text2);font-size:11px;display:block;margin-bottom:2px}
+.ir span{color:var(--text1);font-weight:500}
+.abs-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.75rem}
+.asc{background:var(--bg2);border-radius:8px;padding:.6rem .75rem;text-align:center;border:.5px solid var(--border)}
+.asc-n{font-size:18px;font-weight:500}
+.asc-l{font-size:11px;color:var(--text2);margin-top:1px}
+.abs-form{display:flex;gap:8px;align-items:flex-end;margin-bottom:.75rem;padding:.75rem;background:var(--bg2);border-radius:8px;border:.5px solid var(--border)}
+.abs-form .fl{flex:1}
+.abs-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:.5px solid var(--border);font-size:12px}
+.abs-row:last-child{border-bottom:none}
+.abs-date{color:var(--text2);min-width:90px}
+.abs-reason{flex:1;color:var(--text1)}
+.abs-type{min-width:80px}
+.back-btn{margin-bottom:1rem}
+.topbtn-row{display:flex;gap:8px}
+</style>
+
+<div class="app">
+<h2 style="position:absolute;left:-9999px">نظام تسجيل الطلاب ومتابعة الغياب اليومي</h2>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <h1><i class="ti ti-school" aria-hidden="true"></i>سجل الطلاب</h1>
+    <p>تسجيل بيانات الطلاب — الغياب اليومي — تصدير Excel</p>
+  </div>
+  <div class="topbtn-row">
+    <button class="btn btn-green btn-sm" onclick="exportExcel()"><i class="ti ti-file-spreadsheet" aria-hidden="true" style="margin-left:4px"></i>تصدير Excel</button>
+    <button class="btn btn-primary" onclick="showPane('add')"><i class="ti ti-plus" aria-hidden="true" style="margin-left:4px"></i>طالب جديد</button>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="sc"><div class="sc-n" style="color:var(--accent)" id="s1">0</div><div class="sc-l">إجمالي الطلاب</div></div>
+  <div class="sc"><div class="sc-n" style="color:var(--green)" id="s2">0</div><div class="sc-l">مستجدون</div></div>
+  <div class="sc"><div class="sc-n" style="color:var(--amber)" id="s3">0</div><div class="sc-l">معيدون</div></div>
+  <div class="sc"><div class="sc-n" style="color:var(--red)" id="s4">0</div><div class="sc-l">غيابات اليوم</div></div>
+</div>
+
+<div class="tabs">
+  <button class="tab on" onclick="switchTab('list')"><i class="ti ti-list" aria-hidden="true" style="margin-left:4px"></i>قائمة الطلاب</button>
+  <button class="tab" onclick="switchTab('absence')"><i class="ti ti-calendar-off" aria-hidden="true" style="margin-left:4px"></i>الغياب اليومي</button>
+</div>
+
+<div id="pane-list" class="pane on">
+  <div class="card">
+    <div class="search-row">
+      <input type="text" id="srch" placeholder="بحث بالاسم أو رقم السجل أو الصف..." oninput="renderList()">
+      <select id="flt-status" onchange="renderList()" style="width:130px">
+        <option value="">كل الحالات</option>
+        <option value="مستجد">مستجد</option>
+        <option value="معيد">معيد</option>
+      </select>
+      <select id="flt-grade" onchange="renderList()" style="width:150px">
+        <option value="">كل الصفوف</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th style="width:68px">السجل</th>
+          <th style="width:150px">الاسم والكنية</th>
+          <th style="width:90px">الصف</th>
+          <th style="width:70px">الجنس</th>
+          <th style="width:80px">الديانة</th>
+          <th style="width:70px">اللغة</th>
+          <th style="width:80px">وضع الطالب</th>
+          <th style="width:65px">غيابات</th>
+          <th style="width:80px">إجراءات</th>
+        </tr></thead>
+        <tbody id="list-body"></tbody>
+      </table>
+    </div>
+    <div id="list-empty" class="empty-state" style="display:none">
+      <i class="ti ti-users" aria-hidden="true" style="font-size:30px;display:block;margin-bottom:8px;color:var(--text3)"></i>
+      لا يوجد طلاب. أضف أول طالب.
+    </div>
+  </div>
+</div>
+
+<div id="pane-absence" class="pane">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem">
+      <h3 style="font-size:14px;font-weight:500;color:var(--text1)"><i class="ti ti-calendar-off" aria-hidden="true" style="margin-left:5px;color:var(--accent)"></i>تسجيل الغياب اليومي</h3>
+      <input type="date" id="abs-date-global" style="width:160px" value="">
+    </div>
+    <div id="daily-list"></div>
+  </div>
+  <div class="card">
+    <div class="sec">سجل الغيابات الكاملة</div>
+    <div id="all-absence-list"></div>
+  </div>
+</div>
+
+<div id="pane-add" class="pane">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:16px;font-weight:500;color:var(--text1)"><i class="ti ti-user-plus" aria-hidden="true" style="margin-left:6px;color:var(--accent)"></i><span id="form-title">إضافة طالب جديد</span></h2>
+      <button class="btn btn-outline btn-sm" onclick="showPane('list')"><i class="ti ti-arrow-right" aria-hidden="true" style="margin-left:4px"></i>عودة</button>
+    </div>
+
+    <div class="sec">البيانات الشخصية</div>
+    <div class="fg g3">
+      <div class="fl"><label>رقم السجل العام *</label><input id="f-reg" type="text" placeholder="مثال: 2024001"></div>
+      <div class="fl"><label>الاسم والكنية *</label><input id="f-name" type="text" placeholder="الاسم الأول والكنية"></div>
+      <div class="fl"><label>اسم الأب *</label><input id="f-father" type="text" placeholder="اسم الأب"></div>
+    </div>
+    <div class="fg g3">
+      <div class="fl"><label>اسم الأم مع الكنية</label><input id="f-mother" type="text" placeholder="اسم الأم والكنية"></div>
+      <div class="fl"><label>اسم الجد</label><input id="f-grand" type="text" placeholder="اسم الجد"></div>
+      <div class="fl"><label>الجنس</label>
+        <select id="f-gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select>
+      </div>
+    </div>
+    <div class="fg g4">
+      <div class="fl"><label>مكان الولادة</label><input id="f-birthplace" type="text" placeholder="المدينة / البلد"></div>
+      <div class="fl"><label>تاريخ الولادة</label><input id="f-dob" type="date"></div>
+      <div class="fl"><label>الجنسية</label><input id="f-nat" type="text" placeholder="مثال: لبناني"></div>
+      <div class="fl"><label>الديانة</label>
+        <select id="f-religion">
+          <option value="مسلم">مسلم</option>
+          <option value="مسيحي">مسيحي</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="sec" style="margin-top:.5rem">البيانات الدراسية</div>
+    <div class="fg g4">
+      <div class="fl"><label>الصف المنتسب إليه</label>
+        <select id="f-grade">
+          <optgroup label="المرحلة الابتدائية">
+            <option value="الصف الأول ابتدائي">الصف الأول ابتدائي</option>
+            <option value="الصف الثاني ابتدائي">الصف الثاني ابتدائي</option>
+            <option value="الصف الثالث ابتدائي">الصف الثالث ابتدائي</option>
+            <option value="الصف الرابع ابتدائي">الصف الرابع ابتدائي</option>
+            <option value="الصف الخامس ابتدائي">الصف الخامس ابتدائي</option>
+            <option value="الصف السادس ابتدائي">الصف السادس ابتدائي</option>
+          </optgroup>
+          <optgroup label="المرحلة الإعدادية">
+            <option value="الصف الأول إعدادي">الصف الأول إعدادي</option>
+            <option value="الصف الثاني إعدادي">الصف الثاني إعدادي</option>
+            <option value="الصف الثالث إعدادي">الصف الثالث إعدادي</option>
+          </optgroup>
+          <optgroup label="المرحلة الثانوية">
+            <option value="الصف الأول ثانوي">الصف الأول ثانوي</option>
+            <option value="الصف الثاني ثانوي">الصف الثاني ثانوي</option>
+            <option value="الصف الثالث ثانوي">الصف الثالث ثانوي</option>
+          </optgroup>
+        </select>
+      </div>
+      <div class="fl"><label>اللغة</label>
+        <select id="f-lang">
+          <option value="فرنسي">فرنسي</option>
+          <option value="روسي">روسي</option>
+        </select>
+      </div>
+      <div class="fl"><label>وضع الطالب</label>
+        <select id="f-status" onchange="toggleRepeat()">
+          <option value="مستجد">مستجد</option>
+          <option value="معيد">معيد</option>
+        </select>
+      </div>
+      <div class="fl" id="repeat-wrap" style="display:none"><label>الصفوف التي أعادها</label><input id="f-repeat" type="text" placeholder="مثال: الصف الثالث"></div>
+    </div>
+    <div class="fg g3">
+      <div class="fl"><label>مكان القيد</label><input id="f-regplace" type="text" placeholder="مثال: بيروت - المديرية التربوية"></div>
+      <div class="fl"><label>رقم القيد</label><input id="f-regnum" type="text" placeholder="مثال: 12345"></div>
+      <div class="fl"><label>نتيجة آخر العام</label><input id="f-result" type="text" placeholder="مثال: ناجح / راسب / 85%"></div>
+    </div>
+
+    <div class="sec" style="margin-top:.5rem">ملاحظات</div>
+    <div class="fg g1">
+      <div class="fl"><label>ملاحظات عامة</label><textarea id="f-notes" placeholder="أي معلومات إضافية..."></textarea></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="clearForm()">مسح الحقول</button>
+      <button class="btn btn-primary" onclick="saveStudent()"><i class="ti ti-device-floppy" aria-hidden="true" style="margin-left:4px"></i>حفظ الطالب</button>
+    </div>
+  </div>
+</div>
+
+<div id="pane-profile" class="pane">
+  <div class="back-btn"><button class="btn btn-outline btn-sm" onclick="showPane('list')"><i class="ti ti-arrow-right" aria-hidden="true" style="margin-left:4px"></i>عودة للقائمة</button></div>
+  <div id="profile-content"></div>
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+let DB = JSON.parse(localStorage.getItem('sreg_db4') || '[]');
+let nextId = parseInt(localStorage.getItem('sreg_nid4') || '1');
+let editingId = null;
+
+const GRADES = [
+  'الصف الأول ابتدائي','الصف الثاني ابتدائي','الصف الثالث ابتدائي',
+  'الصف الرابع ابتدائي','الصف الخامس ابتدائي','الصف السادس ابتدائي',
+  'الصف الأول إعدادي','الصف الثاني إعدادي','الصف الثالث إعدادي',
+  'الصف الأول ثانوي','الصف الثاني ثانوي','الصف الثالث ثانوي'
+];
+
+function save(){
+  try{localStorage.setItem('sreg_db4',JSON.stringify(DB));localStorage.setItem('sreg_nid4',nextId);}catch(e){}
+}
+function today(){return new Date().toISOString().slice(0,10);}
+
+function initSeed(){
+  if(DB.length) return;
+  DB=[
+    {id:1,reg:'2024001',name:'أحمد سالم الحداد',father:'سالم الحداد',mother:'فاطمة الزين',grand:'محمد الحداد',gender:'ذكر',birthplace:'بيروت',dob:'2015-04-10',nat:'لبناني',religion:'مسلم',grade:'الصف الخامس ابتدائي',lang:'فرنسي',status:'مستجد',repeat:'',regplace:'بيروت',regnum:'11203',result:'ناجح 82%',notes:'متفوق في الرياضيات',absence:[]},
+    {id:2,reg:'2024002',name:'سارة عمر البستاني',father:'عمر البستاني',mother:'ليلى الخطيب',grand:'خليل البستاني',gender:'أنثى',birthplace:'طرابلس',dob:'2015-08-25',nat:'لبناني',religion:'مسيحي',grade:'الصف الأول إعدادي',lang:'فرنسي',status:'معيد',repeat:'الصف السادس ابتدائي',regplace:'طرابلس',regnum:'33087',result:'راسب',notes:'تحتاج دعماً إضافياً',absence:[{date:today(),type:'غياب',reason:'مرض'}]},
+    {id:3,reg:'2024003',name:'كريم وليد النجار',father:'وليد النجار',mother:'هند السيد',grand:'جورج النجار',gender:'ذكر',birthplace:'صيدا',dob:'2014-12-03',nat:'لبناني',religion:'مسيحي',grade:'الصف الثاني ثانوي',lang:'روسي',status:'مستجد',repeat:'',regplace:'صيدا',regnum:'55412',result:'ناجح 91%',notes:'',absence:[]}
+  ];
+  nextId=4;save();
+}
+
+function populateGradeFilter(){
+  const sel=document.getElementById('flt-grade');
+  const cur=sel.value;
+  sel.innerHTML='<option value="">كل الصفوف</option>';
+  GRADES.forEach(g=>{
+    const o=document.createElement('option');
+    o.value=g;o.textContent=g;
+    if(g===cur)o.selected=true;
+    sel.appendChild(o);
+  });
+}
+
+function showPane(p){
+  document.querySelectorAll('.pane').forEach(el=>el.classList.remove('on'));
+  document.getElementById('pane-'+p).classList.add('on');
+  document.querySelectorAll('.tab').forEach((t,i)=>t.classList.toggle('on',['list','absence'][i]===p));
+  if(p==='absence') renderAbsence();
+  if(p==='list'){renderList();populateGradeFilter();}
+  updateStats();
+}
+function switchTab(t){showPane(t);}
+
+function toggleRepeat(){
+  document.getElementById('repeat-wrap').style.display=
+    document.getElementById('f-status').value==='معيد'?'flex':'none';
+}
+
+function clearForm(){
+  ['f-reg','f-name','f-father','f-mother','f-grand','f-birthplace','f-dob','f-nat',
+   'f-repeat','f-result','f-notes','f-regplace','f-regnum'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-gender').value='ذكر';
+  document.getElementById('f-religion').value='مسلم';
+  document.getElementById('f-grade').value='الصف الأول ابتدائي';
+  document.getElementById('f-lang').value='فرنسي';
+  document.getElementById('f-status').value='مستجد';
+  document.getElementById('repeat-wrap').style.display='none';
+  document.getElementById('form-title').textContent='إضافة طالب جديد';
+  editingId=null;
+}
+
+function saveStudent(){
+  const reg=document.getElementById('f-reg').value.trim();
+  const name=document.getElementById('f-name').value.trim();
+  const father=document.getElementById('f-father').value.trim();
+  if(!reg||!name||!father){alert('يرجى إدخال رقم السجل والاسم واسم الأب.');return;}
+  if(!editingId&&DB.find(s=>s.reg===reg)){alert('رقم السجل مكرر.');return;}
+  const student={
+    id:editingId||nextId++,reg,name,father,
+    mother:document.getElementById('f-mother').value.trim(),
+    grand:document.getElementById('f-grand').value.trim(),
+    gender:document.getElementById('f-gender').value,
+    birthplace:document.getElementById('f-birthplace').value.trim(),
+    dob:document.getElementById('f-dob').value,
+    nat:document.getElementById('f-nat').value.trim(),
+    religion:document.getElementById('f-religion').value,
+    grade:document.getElementById('f-grade').value,
+    lang:document.getElementById('f-lang').value,
+    status:document.getElementById('f-status').value,
+    repeat:document.getElementById('f-repeat').value.trim(),
+    regplace:document.getElementById('f-regplace').value.trim(),
+    regnum:document.getElementById('f-regnum').value.trim(),
+    result:document.getElementById('f-result').value.trim(),
+    notes:document.getElementById('f-notes').value.trim(),
+    absence:editingId?(DB.find(s=>s.id===editingId)||{}).absence||[]:[]
+  };
+  if(editingId){const i=DB.findIndex(s=>s.id===editingId);if(i!==-1)DB[i]=student;editingId=null;}
+  else DB.push(student);
+  save();clearForm();showPane('list');
+}
+
+function editStudent(id){
+  const s=DB.find(x=>x.id===id);if(!s)return;
+  editingId=id;
+  document.getElementById('f-reg').value=s.reg;
+  document.getElementById('f-name').value=s.name;
+  document.getElementById('f-father').value=s.father;
+  document.getElementById('f-mother').value=s.mother||'';
+  document.getElementById('f-grand').value=s.grand||'';
+  document.getElementById('f-gender').value=s.gender;
+  document.getElementById('f-birthplace').value=s.birthplace||'';
+  document.getElementById('f-dob').value=s.dob||'';
+  document.getElementById('f-nat').value=s.nat||'';
+  document.getElementById('f-religion').value=s.religion||'مسلم';
+  document.getElementById('f-grade').value=s.grade||'الصف الأول ابتدائي';
+  document.getElementById('f-lang').value=s.lang||'فرنسي';
+  document.getElementById('f-status').value=s.status;
+  document.getElementById('f-repeat').value=s.repeat||'';
+  document.getElementById('f-regplace').value=s.regplace||'';
+  document.getElementById('f-regnum').value=s.regnum||'';
+  document.getElementById('f-result').value=s.result||'';
+  document.getElementById('f-notes').value=s.notes||'';
+  toggleRepeat();
+  document.getElementById('form-title').textContent='تعديل بيانات الطالب';
+  showPane('add');
+}
+
+function deleteStudent(id){
+  if(!confirm('هل تريد حذف هذا الطالب؟'))return;
+  DB=DB.filter(s=>s.id!==id);save();renderList();updateStats();
+}
+
+function openProfile(id){
+  const s=DB.find(x=>x.id===id);if(!s)return;
+  const initials=(s.name.split(' ')[0]?.[0]||'')+(s.name.split(' ')[1]?.[0]||'');
+  const sb=s.status==='معيد'?'<span class="badge ba">معيد</span>':'<span class="badge bg">مستجد</span>';
+  const pc=document.getElementById('profile-content');
+  pc.innerHTML=`
+  <div class="profile-wrap">
+    <div class="profile-hdr">
+      <div class="avatar">${initials}</div>
+      <div style="flex:1">
+        <h2>${s.name}</h2>
+        <p>رقم السجل: ${s.reg} &nbsp;|&nbsp; ${s.grade} &nbsp;|&nbsp; ${sb}</p>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="editStudent(${s.id})"><i class="ti ti-edit" aria-hidden="true" style="margin-left:3px"></i>تعديل</button>
+    </div>
+
+    <div class="sec">البيانات الشخصية</div>
+    <div class="info-grid">
+      <div class="ir"><label>الاسم والكنية</label><span>${s.name}</span></div>
+      <div class="ir"><label>اسم الأب</label><span>${s.father||'—'}</span></div>
+      <div class="ir"><label>اسم الأم</label><span>${s.mother||'—'}</span></div>
+      <div class="ir"><label>اسم الجد</label><span>${s.grand||'—'}</span></div>
+      <div class="ir"><label>الجنس</label><span>${s.gender}</span></div>
+      <div class="ir"><label>الديانة</label><span>${s.religion||'—'}</span></div>
+      <div class="ir"><label>مكان الولادة</label><span>${s.birthplace||'—'}</span></div>
+      <div class="ir"><label>تاريخ الولادة</label><span>${s.dob||'—'}</span></div>
+      <div class="ir"><label>الجنسية</label><span>${s.nat||'—'}</span></div>
+    </div>
+
+    <div class="sec" style="margin-top:.25rem">البيانات الدراسية</div>
+    <div class="info-grid">
+      <div class="ir"><label>الصف المنتسب إليه</label><span>${s.grade||'—'}</span></div>
+      <div class="ir"><label>اللغة</label><span>${s.lang||'—'}</span></div>
+      <div class="ir"><label>وضع الطالب</label><span>${s.status}</span></div>
+      <div class="ir"><label>مكان القيد</label><span>${s.regplace||'—'}</span></div>
+      <div class="ir"><label>رقم القيد</label><span>${s.regnum||'—'}</span></div>
+      <div class="ir"><label>نتيجة آخر العام</label><span>${s.result||'—'}</span></div>
+      ${s.status==='معيد'&&s.repeat?`<div class="ir" style="grid-column:1/-1"><label>الصفوف التي أعادها</label><span>${s.repeat}</span></div>`:''}
+      ${s.notes?`<div class="ir" style="grid-column:1/-1"><label>ملاحظات</label><span>${s.notes}</span></div>`:''}
+    </div>
+
+    <div class="sec" style="margin-top:.25rem">الغياب</div>
+    <div class="abs-stats">
+      <div class="asc"><div class="asc-n" style="color:var(--red)">${(s.absence||[]).length}</div><div class="asc-l">إجمالي الغيابات</div></div>
+      <div class="asc"><div class="asc-n" style="color:var(--amber)">${(s.absence||[]).filter(a=>a.type==='غياب').length}</div><div class="asc-l">غياب كامل</div></div>
+      <div class="asc"><div class="asc-n" style="color:var(--accent)">${(s.absence||[]).filter(a=>a.type==='تأخر').length}</div><div class="asc-l">تأخر</div></div>
+    </div>
+    <div class="abs-form">
+      <div class="fl" style="min-width:110px"><label>التاريخ</label><input type="date" id="pa-date" value="${today()}"></div>
+      <div class="fl" style="min-width:100px"><label>النوع</label>
+        <select id="pa-type"><option>غياب</option><option>تأخر</option><option>إذن مسبق</option></select>
+      </div>
+      <div class="fl" style="flex:1"><label>السبب</label><input type="text" id="pa-reason" placeholder="اختياري"></div>
+      <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addAbsence(${s.id})"><i class="ti ti-plus" aria-hidden="true"></i> إضافة</button>
+    </div>
+    <div id="abs-list-${s.id}">${renderAbsList(s)}</div>
+  </div>`;
+  showPane('profile');
+}
+
+function renderAbsList(s){
+  const abs=(s.absence||[]).slice().reverse();
+  if(!abs.length)return`<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد غيابات مسجّلة</div>`;
+  return abs.map(a=>{
+    const tc=a.type==='غياب'?'br':a.type==='تأخر'?'bb':'ba';
+    return`<div class="abs-row"><span class="abs-date">${a.date}</span><span class="abs-reason">${a.reason||'—'}</span><span class="abs-type"><span class="badge ${tc}">${a.type}</span></span></div>`;
+  }).join('');
+}
+
+function addAbsence(id){
+  const s=DB.find(x=>x.id===id);if(!s)return;
+  const date=document.getElementById('pa-date').value;
+  const type=document.getElementById('pa-type').value;
+  const reason=document.getElementById('pa-reason').value.trim();
+  if(!date){alert('يرجى تحديد التاريخ.');return;}
+  s.absence=s.absence||[];
+  s.absence.push({date,type,reason});
+  save();
+  document.getElementById(`abs-list-${id}`).innerHTML=renderAbsList(s);
+  document.getElementById('pa-reason').value='';
+  updateStats();
+}
+
+function renderList(){
+  const q=(document.getElementById('srch').value||'').toLowerCase();
+  const fst=document.getElementById('flt-status').value;
+  const fg=document.getElementById('flt-grade').value;
+  let rows=DB.filter(s=>{
+    if(q&&!s.name.toLowerCase().includes(q)&&!s.reg.includes(q)&&!(s.grade||'').includes(q))return false;
+    if(fst&&s.status!==fst)return false;
+    if(fg&&s.grade!==fg)return false;
+    return true;
+  });
+  const tbody=document.getElementById('list-body');
+  const empty=document.getElementById('list-empty');
+  if(!rows.length){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+  tbody.innerHTML=rows.map(s=>{
+    const abs=(s.absence||[]).length;
+    const stc=s.status==='مستجد'?'bg':'ba';
+    const gc=s.gender==='ذكر'?'bb':'bp';
+    const rc=s.religion==='مسلم'?'bt':'bp';
+    const lc=s.lang==='فرنسي'?'bb':'ba';
+    const gradeShort=(s.grade||'').replace('الصف ','').replace(' ابتدائي','ابت').replace(' إعدادي','إعد').replace(' ثانوي','ثان');
+    return`<tr onclick="openProfile(${s.id})">
+      <td>${s.reg}</td>
+      <td>${s.name}</td>
+      <td><span style="font-size:11px;color:var(--text1)">${gradeShort}</span></td>
+      <td><span class="badge ${gc}">${s.gender}</span></td>
+      <td><span class="badge ${rc}">${s.religion||'—'}</span></td>
+      <td><span class="badge ${lc}">${s.lang||'—'}</span></td>
+      <td><span class="badge ${stc}">${s.status}</span></td>
+      <td>${abs>0?`<span class="badge br">${abs}</span>`:`<span style="color:var(--text3)">0</span>`}</td>
+      <td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">
+        <button class="btn btn-outline btn-sm" onclick="editStudent(${s.id})" aria-label="تعديل"><i class="ti ti-edit" aria-hidden="true"></i></button>
+        <button class="btn-red-sm" onclick="deleteStudent(${s.id})" aria-label="حذف"><i class="ti ti-trash" aria-hidden="true"></i></button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderAbsence(){
+  const d=document.getElementById('abs-date-global').value||today();
+  document.getElementById('abs-date-global').value=d;
+  const daily=document.getElementById('daily-list');
+  if(!DB.length){daily.innerHTML='<div class="empty-state">لا يوجد طلاب مسجّلون.</div>';return;}
+  daily.innerHTML=`
+  <div style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:.75rem">
+    <i class="ti ti-calendar" aria-hidden="true" style="margin-left:5px;color:var(--accent)"></i>تسجيل غياب يوم: ${d}
+  </div>
+  <table style="table-layout:fixed">
+    <thead><tr>
+      <th style="width:68px">السجل</th>
+      <th style="width:150px">الاسم</th>
+      <th style="width:110px">الصف</th>
+      <th style="width:110px">الحالة</th>
+      <th style="width:120px">السبب</th>
+      <th style="width:85px">تسجيل</th>
+    </tr></thead>
+    <tbody>${DB.map(s=>{
+      const ex=(s.absence||[]).find(a=>a.date===d);
+      const gs=(s.grade||'').replace('الصف ','').replace(' ابتدائي','ابت').replace(' إعدادي','إعد').replace(' ثانوي','ثان');
+      return`<tr>
+        <td>${s.reg}</td><td>${s.name}</td>
+        <td style="font-size:11px">${gs}</td>
+        <td><select id="abs-t-${s.id}" style="padding:4px 6px;font-size:12px">
+          <option value="" ${!ex?'selected':''}>حاضر</option>
+          <option value="غياب" ${ex&&ex.type==='غياب'?'selected':''}>غياب</option>
+          <option value="تأخر" ${ex&&ex.type==='تأخر'?'selected':''}>تأخر</option>
+          <option value="إذن مسبق" ${ex&&ex.type==='إذن مسبق'?'selected':''}>إذن مسبق</option>
+        </select></td>
+        <td><input type="text" id="abs-r-${s.id}" value="${ex?ex.reason:''}" placeholder="السبب" style="padding:4px 7px;font-size:12px"></td>
+        <td><button class="btn btn-primary btn-sm" onclick="saveOneDayAbsence(${s.id},'${d}')">حفظ</button></td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table>`;
+
+  const allAbs=document.getElementById('all-absence-list');
+  let all=[];
+  DB.forEach(s=>(s.absence||[]).forEach(a=>all.push({...a,sname:s.name,sreg:s.reg,sgrade:s.grade})));
+  all.sort((a,b)=>b.date.localeCompare(a.date));
+  if(!all.length){allAbs.innerHTML='<div class="empty-state">لا توجد غيابات مسجّلة.</div>';return;}
+  allAbs.innerHTML=`<table style="table-layout:fixed">
+    <thead><tr>
+      <th style="width:92px">التاريخ</th>
+      <th style="width:62px">السجل</th>
+      <th style="width:150px">الاسم</th>
+      <th style="width:105px">الصف</th>
+      <th style="width:90px">النوع</th>
+      <th>السبب</th>
+    </tr></thead>
+    <tbody>${all.map(a=>{
+      const tc=a.type==='غياب'?'br':a.type==='تأخر'?'bb':'ba';
+      const gs=(a.sgrade||'').replace('الصف ','').replace(' ابتدائي','ابت').replace(' إعدادي','إعد').replace(' ثانوي','ثان');
+      return`<tr><td>${a.date}</td><td>${a.sreg}</td><td>${a.sname}</td><td style="font-size:11px">${gs}</td><td><span class="badge ${tc}">${a.type}</span></td><td>${a.reason||'—'}</td></tr>`;
+    }).join('')}</tbody>
+  </table>`;
+}
+
+function saveOneDayAbsence(id,date){
+  const s=DB.find(x=>x.id===id);if(!s)return;
+  const type=document.getElementById(`abs-t-${id}`).value;
+  const reason=document.getElementById(`abs-r-${id}`).value.trim();
+  s.absence=s.absence||[];
+  s.absence=s.absence.filter(a=>a.date!==date);
+  if(type)s.absence.push({date,type,reason});
+  save();updateStats();renderAbsence();
+}
+
+function updateStats(){
+  document.getElementById('s1').textContent=DB.length;
+  document.getElementById('s2').textContent=DB.filter(s=>s.status==='مستجد').length;
+  document.getElementById('s3').textContent=DB.filter(s=>s.status==='معيد').length;
+  const t=today();
+  document.getElementById('s4').textContent=DB.reduce((n,s)=>n+((s.absence||[]).filter(a=>a.date===t&&a.type==='غياب').length),0);
+}
+
+function exportExcel(){
+  if(!DB.length){alert('لا توجد بيانات للتصدير.');return;}
+  const wb=XLSX.utils.book_new();
+  const d1=[
+    ['رقم السجل','الاسم والكنية','اسم الأب','اسم الأم','اسم الجد','الجنس','الديانة','مكان الولادة','تاريخ الولادة','الجنسية','الصف','اللغة','وضع الطالب','الصفوف المعادة','مكان القيد','رقم القيد','نتيجة آخر العام','إجمالي الغيابات','ملاحظات'],
+    ...DB.map(s=>[s.reg,s.name,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.result,(s.absence||[]).length,s.notes])
+  ];
+  const ws1=XLSX.utils.aoa_to_sheet(d1);
+  ws1['!cols']=[8,20,14,16,14,7,9,12,12,10,18,8,9,18,16,10,15,8,22].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws1,'بيانات الطلاب');
+  const d2=[
+    ['رقم السجل','اسم الطالب','الصف','التاريخ','نوع الغياب','السبب'],
+    ...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.name,s.grade,a.date,a.type,a.reason]))
+  ];
+  const ws2=XLSX.utils.aoa_to_sheet(d2);
+  ws2['!cols']=[10,22,18,12,12,20].map(w=>({wch:w}));
+  XLSX.utils.book_append_sheet(wb,ws2,'سجل الغيابات');
+  XLSX.writeFile(wb,'سجل_الطلاب.xlsx');
+}
+
+document.getElementById('abs-date-global').addEventListener('change',renderAbsence);
+initSeed();populateGradeFilter();updateStats();renderList();
+</script>
