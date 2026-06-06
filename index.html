@@ -189,7 +189,13 @@ tr:hover td{background:var(--surface2);cursor:pointer}
     <span id="user-email-display"></span>
   </div>
   <div class="topbtn-row">
-    <button class="btn btn-green btn-sm" onclick="exportExcel()"><i class="ti ti-file-spreadsheet" style="margin-left:4px"></i>تصدير Excel</button>
+    <div id="admin-btns" style="display:none;gap:8px;align-items:center">
+      <button class="btn btn-green btn-sm" onclick="exportExcel()"><i class="ti ti-file-spreadsheet" style="margin-left:4px"></i>تصدير Excel</button>
+      <label class="btn btn-sm" style="background:#e8a94a;color:#3a2000;border:none;cursor:pointer;font-weight:500;padding:5px 11px;border-radius:8px;display:inline-flex;align-items:center;gap:4px">
+        <i class="ti ti-file-import"></i>استيراد Excel
+        <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
+      </label>
+    </div>
     <button class="btn btn-primary" onclick="showPane('add')"><i class="ti ti-plus" style="margin-left:4px"></i>طالب جديد</button>
     <button class="btn-danger btn-sm" onclick="doLogout()"><i class="ti ti-logout" style="margin-left:4px"></i>خروج</button>
   </div>
@@ -378,6 +384,7 @@ const firebaseConfig={apiKey:"AIzaSyC-ihYPTU2MfONgCEfF_4Kcdw5uuLSYmcA",authDomai
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const auth=getAuth(app);
+const ADMIN_EMAIL = "sdsamer@gmail.com";
 const GRADES=["التحضيري","الصف الأول ابتدائي","الصف الثاني ابتدائي","الصف الثالث ابتدائي","الصف الرابع ابتدائي","الصف الخامس ابتدائي","الصف السادس ابتدائي","الصف الأول إعدادي","الصف الثاني إعدادي","الصف الثالث إعدادي","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null;
 function today(){return new Date().toISOString().slice(0,10);}
@@ -385,7 +392,11 @@ function showToast(msg){const t=document.getElementById("toast");t.textContent=m
 function populateGradeFilter(){const sel=document.getElementById("flt-grade");const cur=sel.value;sel.innerHTML='<option value="">كل الصفوف</option>';GRADES.forEach(g=>{const o=document.createElement("option");o.value=g;o.textContent=g;if(g===cur)o.selected=true;sel.appendChild(o);});}
 onAuthStateChanged(auth,user=>{
   document.getElementById("loading-overlay").style.display="none";
-  if(user){document.getElementById("login-screen").classList.remove("show");document.getElementById("app").classList.add("show");document.getElementById("user-email-display").textContent=user.email;startListening();}
+  if(user){document.getElementById("login-screen").classList.remove("show");document.getElementById("app").classList.add("show");document.getElementById("user-email-display").textContent=user.email;
+    const adminBtns=document.getElementById("admin-btns");
+    if(user.email===ADMIN_EMAIL){adminBtns.style.display="flex";}
+    else{adminBtns.style.display="none";}
+    startListening();}
   else{document.getElementById("login-screen").classList.add("show");document.getElementById("app").classList.remove("show");if(unsubscribe){unsubscribe();unsubscribe=null;}DB=[];}
 });
 window.doLogin=async function(){
@@ -513,6 +524,85 @@ function renderAbsence(){
 }
 window.saveDayAbsence=async function(fid,date){const s=DB.find(x=>x.firestoreId===fid);if(!s)return;const type=document.getElementById(`abs-t-${fid}`).value;const reason=document.getElementById(`abs-r-${fid}`).value.trim();let absence=(s.absence||[]).filter(a=>a.date!==date);if(type)absence.push({date,type,reason});try{await updateDoc(doc(db,"students",fid),{absence});showToast("✅ تم حفظ الغياب");}catch(e){alert("خطأ: "+e.message);}};
 function updateStats(){document.getElementById("s1").textContent=DB.length;document.getElementById("s2").textContent=DB.filter(s=>s.status==="مستجد").length;document.getElementById("s3").textContent=DB.filter(s=>s.status==="معيد").length;const t=today();document.getElementById("s4").textContent=DB.reduce((n,s)=>n+((s.absence||[]).filter(a=>a.date===t&&a.type==="غياب").length),0);}
+window.importExcel=async function(input){
+  const file=input.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=async function(e){
+    try{
+      const wb=XLSX.read(e.target.result,{type:"binary"});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rows=XLSX.utils.sheet_to_json(ws,{header:1});
+      if(rows.length<2){alert("الملف فارغ أو لا يحتوي على بيانات.");return;}
+      // السطر الأول هو العناوين - نبدأ من السطر الثاني
+      const headers=rows[0].map(h=>(h||"").toString().trim());
+      const colMap={};
+      const mapping={
+        "رقم السجل":"reg","الاسم":"name","الشهرة":"surname","اسم الأب":"father",
+        "اسم الأم":"mother","اسم الجد":"grand","الجنس":"gender","الديانة":"religion",
+        "مكان الولادة":"birthplace","تاريخ الولادة":"dob","الجنسية":"nat",
+        "الرقم الوطني":"natid","رقم الهاتف":"phone","بلد الإقامة":"country",
+        "العنوان":"address","العنوان الحالي":"address","الصف":"grade",
+        "اللغة الأجنبية":"lang","وضع الطالب":"status","الصفوف المعادة":"repeat",
+        "مكان القيد":"regplace","رقم القيد":"regnum","المحافظة":"province",
+        "نتيجة آخر العام":"result","المحاسبة":"accounting","ملاحظات":"notes"
+      };
+      headers.forEach((h,i)=>{ if(mapping[h]) colMap[mapping[h]]=i; });
+      if(colMap["reg"]===undefined&&colMap["name"]===undefined){
+        alert("لم يتم التعرف على أعمدة الملف.\nتأكد أن الملف تم تصديره من نفس النظام.");
+        input.value=""; return;
+      }
+      let added=0, skipped=0, errors=[];
+      const dataRows=rows.slice(1).filter(r=>r.some(c=>c!==undefined&&c!==""));
+      for(const row of dataRows){
+        const reg=(colMap["reg"]!==undefined?row[colMap["reg"]]||"":"").toString().trim();
+        const name=(colMap["name"]!==undefined?row[colMap["name"]]||"":"").toString().trim();
+        const surname=(colMap["surname"]!==undefined?row[colMap["surname"]]||"":"").toString().trim();
+        if(!reg||!name){skipped++;continue;}
+        if(DB.find(s=>s.reg===reg)){skipped++;continue;}
+        const student={
+          reg,name,surname,
+          father:(colMap["father"]!==undefined?row[colMap["father"]]||"":"").toString().trim(),
+          mother:(colMap["mother"]!==undefined?row[colMap["mother"]]||"":"").toString().trim(),
+          grand:(colMap["grand"]!==undefined?row[colMap["grand"]]||"":"").toString().trim(),
+          gender:(colMap["gender"]!==undefined?row[colMap["gender"]]||"ذكر":"ذكر").toString().trim(),
+          religion:(colMap["religion"]!==undefined?row[colMap["religion"]]||"مسلم":"مسلم").toString().trim(),
+          birthplace:(colMap["birthplace"]!==undefined?row[colMap["birthplace"]]||"":"").toString().trim(),
+          dob:(colMap["dob"]!==undefined?row[colMap["dob"]]||"":"").toString().trim(),
+          nat:(colMap["nat"]!==undefined?row[colMap["nat"]]||"":"").toString().trim(),
+          natid:(colMap["natid"]!==undefined?row[colMap["natid"]]||"":"").toString().trim(),
+          phone:(colMap["phone"]!==undefined?row[colMap["phone"]]||"":"").toString().trim(),
+          country:(colMap["country"]!==undefined?row[colMap["country"]]||"":"").toString().trim(),
+          address:(colMap["address"]!==undefined?row[colMap["address"]]||"":"").toString().trim(),
+          grade:(colMap["grade"]!==undefined?row[colMap["grade"]]||"التحضيري":"التحضيري").toString().trim(),
+          lang:(colMap["lang"]!==undefined?row[colMap["lang"]]||"لا يوجد":"لا يوجد").toString().trim(),
+          status:(colMap["status"]!==undefined?row[colMap["status"]]||"مستجد":"مستجد").toString().trim(),
+          repeat:(colMap["repeat"]!==undefined?row[colMap["repeat"]]||"":"").toString().trim(),
+          regplace:(colMap["regplace"]!==undefined?row[colMap["regplace"]]||"":"").toString().trim(),
+          regnum:(colMap["regnum"]!==undefined?row[colMap["regnum"]]||"":"").toString().trim(),
+          province:(colMap["province"]!==undefined?row[colMap["province"]]||"":"").toString().trim(),
+          result:(colMap["result"]!==undefined?row[colMap["result"]]||"":"").toString().trim(),
+          accounting:(colMap["accounting"]!==undefined?row[colMap["accounting"]]||"مثبت":"مثبت").toString().trim(),
+          notes:(colMap["notes"]!==undefined?row[colMap["notes"]]||"":"").toString().trim(),
+          absence:[],createdAt:Date.now()+added
+        };
+        try{
+          const {addDoc:ad,collection:co}=await import("https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js");
+          await addDoc(collection(db,"students"),student);
+          added++;
+        }catch(err){errors.push(reg);}
+      }
+      input.value="";
+      let msg=`✅ تم استيراد ${added} طالب بنجاح.`;
+      if(skipped>0) msg+=`\n⚠️ تم تخطي ${skipped} سجل (مكرر أو ناقص).`;
+      if(errors.length>0) msg+=`\n❌ فشل استيراد ${errors.length} سجل.`;
+      alert(msg);
+    }catch(err){
+      alert("خطأ في قراءة الملف: "+err.message);
+      input.value="";
+    }
+  };
+  reader.readAsBinaryString(file);
+};
 window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
 document.getElementById("abs-date-global").addEventListener("change",renderAbsence);
 populateGradeFilter();
