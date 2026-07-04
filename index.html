@@ -196,7 +196,7 @@ tr:hover td{background:var(--surface2);cursor:pointer}
         <input type="file" id="import-file" accept=".xlsx,.xls" style="display:none" onchange="importExcel(this)">
       </label>
     </div>
-    <button class="btn btn-primary" onclick="showPane('add')"><i class="ti ti-plus" style="margin-left:4px"></i>طالب جديد</button>
+    <span id="add-student-btn"><button class="btn btn-primary" onclick="showPane('add')"><i class="ti ti-plus" style="margin-left:4px"></i>طالب جديد</button></span>
     <button class="btn-danger btn-sm" onclick="doLogout()"><i class="ti ti-logout" style="margin-left:4px"></i>خروج</button>
   </div>
 </div>
@@ -428,6 +428,7 @@ window.clearForm=function(){
   document.getElementById("repeat-wrap").style.display="none";document.getElementById("form-title").textContent="إضافة طالب جديد";document.getElementById("save-btn").innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ الطالب';editingId=null;
 };
 window.saveStudent=async function(){
+  if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية إضافة أو تعديل الطلاب.");return;}
   const reg=document.getElementById("f-reg").value.trim();const name=document.getElementById("f-name").value.trim();const surname=document.getElementById("f-surname").value.trim();
   if(!reg||!name||!surname){alert("يرجى إدخال رقم السجل والاسم والشهرة.");return;}
   if(!editingId&&DB.find(s=>s.reg===reg)){alert("رقم السجل مكرر.");return;}
@@ -441,6 +442,7 @@ window.saveStudent=async function(){
   btn.innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ الطالب';btn.disabled=false;
 };
 window.editStudent=function(fid){
+  if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية التعديل.");return;}
   const s=DB.find(x=>x.firestoreId===fid);if(!s)return;editingId=fid;
   ["reg","name","surname","father","mother","grand","birthplace","dob","nat","natid","phone","country","address","repeat","regplace","regnum","province","notes"].forEach(f=>{const el=document.getElementById("f-"+f);if(el)el.value=s[f]||"";});
   document.getElementById("f-gender").value=s.gender||"ذكر";document.getElementById("f-religion").value=s.religion||"مسلم";document.getElementById("f-grade").value=s.grade||"التحضيري";document.getElementById("f-lang").value=s.lang||"لا يوجد";document.getElementById("f-status").value=s.status||"مستجد";document.getElementById("f-result").value=s.result||"";document.getElementById("f-accounting").value=s.accounting||"مثبت";
@@ -456,7 +458,7 @@ window.openProfile=function(fid){
     <div class="profile-hdr">
       <div class="avatar">${initials}</div>
       <div style="flex:1"><h2>${s.name} ${s.surname}</h2><p>${s.reg} | ${s.grade} | ${sb} | ${ac}</p></div>
-      <button class="btn btn-outline btn-sm" onclick="editStudent('${s.firestoreId}')"><i class="ti ti-edit" style="margin-left:3px"></i>تعديل</button>
+      ${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn btn-outline btn-sm" onclick="editStudent('${s.firestoreId}')"><i class="ti ti-edit" style="margin-left:3px"></i>تعديل</button>`:""}
       ${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn-danger btn-sm" onclick="deleteStudent('${s.firestoreId}')"><i class="ti ti-trash" style="margin-left:3px"></i>حذف</button>`:""}
       ${ADMIN_EMAILS.includes(currentUserEmail)?`<button class="btn-danger btn-sm" onclick="deleteStudent('${s.firestoreId}')"><i class="ti ti-trash" style="margin-left:3px"></i>حذف</button>`:""}
     </div>
@@ -515,7 +517,7 @@ function renderList(){
   if(!rows.length){tbody.innerHTML="";empty.style.display="block";return;}empty.style.display="none";
   tbody.innerHTML=rows.map(s=>{
     const abs=(s.absence||[]).length;const stc=s.status==="مستجد"?"bg":"ba";const gc=s.gender==="ذكر"?"bb":"bp";const ac=s.accounting==="مثبت"?"bg":"br";
-    return`<tr onclick="openProfile('${s.firestoreId}')"><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||"—"}</td><td style="font-size:11px">${s.grade||"—"}</td><td><span class="badge ${gc}">${s.gender}</span></td><td><span class="badge ${stc}">${s.status}</span></td><td><span class="badge ${ac}">${s.accounting||"—"}</span></td><td>${abs>0?`<span class="badge br">${abs}</span>`:'<span style="color:var(--text3)">0</span>'}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px"><button class="btn btn-outline btn-sm" onclick="editStudent('${s.firestoreId}')"><i class="ti ti-edit"></i></button>${DB.find(x=>x.firestoreId===s.firestoreId)&&ADMIN_EMAILS.includes(currentUserEmail)?`${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn-red-sm" onclick="deleteStudent('${s.firestoreId}')"><i class="ti ti-trash"></i></button>`:""}`:""}</div></td></tr>`;
+    return`<tr onclick="openProfile('${s.firestoreId}')"><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||"—"}</td><td style="font-size:11px">${s.grade||"—"}</td><td><span class="badge ${gc}">${s.gender}</span></td><td><span class="badge ${stc}">${s.status}</span></td><td><span class="badge ${ac}">${s.accounting||"—"}</span></td><td>${abs>0?`<span class="badge br">${abs}</span>`:'<span style="color:var(--text3)">0</span>'}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn btn-outline btn-sm" onclick="editStudent('${s.firestoreId}')"><i class="ti ti-edit"></i></button>`:""}${DB.find(x=>x.firestoreId===s.firestoreId)&&ADMIN_EMAILS.includes(currentUserEmail)?`${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn-red-sm" onclick="deleteStudent('${s.firestoreId}')"><i class="ti ti-trash"></i></button>`:""}`:""}</div></td></tr>`;
   }).join("");
 }
 function renderAbsence(){
