@@ -562,8 +562,8 @@ window.openProfile=function(fid){
 };
 function renderAbsList(s){const abs=(s.absence||[]).slice().reverse();if(!abs.length)return'<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد غيابات مسجّلة</div>';return abs.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<div class="abs-row"><span class="abs-date">${a.date}</span><span class="abs-reason">${a.reason||"—"}</span><span class="abs-type"><span class="badge ${tc}">${a.type}</span></span></div>`;}).join("");}
 window.addAbsence=async function(fid){const s=DB.find(x=>x.firestoreId===fid);if(!s)return;const date=document.getElementById("pa-date").value;const type=document.getElementById("pa-type").value;const reason=document.getElementById("pa-reason").value.trim();if(!date){alert("يرجى تحديد التاريخ.");return;}try{await updateDoc(doc(db,"students",fid),{absence:[...(s.absence||[]),{date,type,reason}]});document.getElementById("pa-reason").value="";showToast("✅ تم تسجيل الغياب");}catch(e){alert("خطأ: "+e.message);}};
-function normalizeAr(str){return(str||"").replace(/[أإآا]/g,"ا").replace(/[ةه]/g,"ه").replace(/ى/g,"ي").toLowerCase().trim();}
-function renderList(){
+window.normalizeAr=function normalizeAr(str){return(str||"").replace(/[أإآا]/g,"ا").replace(/[ةه]/g,"ه").replace(/ى/g,"ي").toLowerCase().trim();}
+window.renderList=function renderList(){
   const raw=document.getElementById("srch").value||"";
   const q2=normalizeAr(raw);
   const fst=document.getElementById("flt-status").value;const fg=document.getElementById("flt-grade").value;
@@ -583,7 +583,7 @@ function renderList(){
     return`<tr onclick="openProfile('${s.firestoreId}')"><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||"—"}</td><td style="font-size:11px">${s.grade||"—"}</td><td><span class="badge ${gc}">${s.gender}</span></td><td><span class="badge ${stc}">${s.status}</span></td><td><span class="badge ${ac}">${s.accounting||"—"}</span></td><td>${abs>0?`<span class="badge br">${abs}</span>`:'<span style="color:var(--text3)">0</span>'}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn btn-outline btn-sm" onclick="editStudent('${s.firestoreId}')"><i class="ti ti-edit"></i></button>`:""}${DB.find(x=>x.firestoreId===s.firestoreId)&&ADMIN_EMAILS.includes(currentUserEmail)?`${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn-red-sm" onclick="deleteStudent('${s.firestoreId}')"><i class="ti ti-trash"></i></button>`:""}`:""}</div></td></tr>`;
   }).join("");
 }
-function renderAbsence(){
+window.renderAbsence=function renderAbsence(){
   const d=document.getElementById("abs-date-global").value||today();document.getElementById("abs-date-global").value=d;
   const daily=document.getElementById("daily-list");if(!DB.length){daily.innerHTML='<div class="empty-state">لا يوجد طلاب مسجّلون.</div>';return;}
   daily.innerHTML=`<p style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:.75rem"><i class="ti ti-calendar" style="margin-left:5px;color:var(--accent)"></i>تسجيل غياب يوم: ${d}</p><div class="tbl-wrap"><table><thead><tr><th>السجل</th><th>الاسم</th><th>الشهرة</th><th>الصف</th><th>الحالة</th><th>السبب</th><th>تسجيل</th></tr></thead><tbody>${DB.map(s=>{const ex=(s.absence||[]).find(a=>a.date===d);return`<tr><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||""}</td><td style="font-size:11px">${s.grade||""}</td><td><select id="abs-t-${s.firestoreId}" style="padding:4px 6px;font-size:12px"><option value="" ${!ex?"selected":""}>حاضر</option><option value="غياب" ${ex&&ex.type==="غياب"?"selected":""}>غياب</option><option value="تأخر" ${ex&&ex.type==="تأخر"?"selected":""}>تأخر</option><option value="إذن مسبق" ${ex&&ex.type==="إذن مسبق"?"selected":""}>إذن مسبق</option></select></td><td><input type="text" id="abs-r-${s.firestoreId}" value="${ex?ex.reason:""}" placeholder="السبب" style="padding:4px 7px;font-size:12px"></td><td><button class="btn btn-primary btn-sm" onclick="saveDayAbsence('${s.firestoreId}','${d}')">حفظ</button></td></tr>`;}).join("")}</tbody></table></div>`;
@@ -673,7 +673,7 @@ window.importExcel=async function(input){
   reader.readAsBinaryString(file);
 };
 window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","رقم المعرف","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.uid||"",s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","رقم المعرف","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.uid,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
-document.getElementById("abs-date-global").addEventListener("change",renderAbsence);
+document.getElementById("abs-date-global").addEventListener("change",window.renderAbsence);
 populateGradeFilter();
 </script>
 </body>
