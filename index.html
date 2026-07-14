@@ -390,7 +390,7 @@ const db=getFirestore(app);
 const auth=getAuth(app);
 const ADMIN_EMAILS = ["sdsamer@gmail.com","alnajemamal288@gmail.com"];
 let DB_USER_EMAIL = "";
-const GRADES=["التحضيري","الصف الأول","الصف الثاني","الصف الثالث","الصف الرابع","الصف الخامس","الصف السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
+const GRADES=["التحضيري"," الأول"," الثاني"," الثالث"," الرابع"," الخامس"," السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null,currentUserEmail='';
 function today(){return new Date().toISOString().slice(0,10);}
 function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
