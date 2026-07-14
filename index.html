@@ -562,9 +562,20 @@ window.openProfile=function(fid){
 };
 function renderAbsList(s){const abs=(s.absence||[]).slice().reverse();if(!abs.length)return'<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد غيابات مسجّلة</div>';return abs.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<div class="abs-row"><span class="abs-date">${a.date}</span><span class="abs-reason">${a.reason||"—"}</span><span class="abs-type"><span class="badge ${tc}">${a.type}</span></span></div>`;}).join("");}
 window.addAbsence=async function(fid){const s=DB.find(x=>x.firestoreId===fid);if(!s)return;const date=document.getElementById("pa-date").value;const type=document.getElementById("pa-type").value;const reason=document.getElementById("pa-reason").value.trim();if(!date){alert("يرجى تحديد التاريخ.");return;}try{await updateDoc(doc(db,"students",fid),{absence:[...(s.absence||[]),{date,type,reason}]});document.getElementById("pa-reason").value="";showToast("✅ تم تسجيل الغياب");}catch(e){alert("خطأ: "+e.message);}};
+function normalizeAr(str){return(str||"").replace(/[أإآا]/g,"ا").replace(/[ةه]/g,"ه").replace(/ى/g,"ي").toLowerCase().trim();}
 function renderList(){
-  const q2=(document.getElementById("srch").value||"").toLowerCase();const fst=document.getElementById("flt-status").value;const fg=document.getElementById("flt-grade").value;
-  const rows=DB.filter(s=>{if(q2&&!s.name?.toLowerCase().includes(q2)&&!s.surname?.toLowerCase().includes(q2)&&!s.reg?.includes(q2))return false;if(fst&&s.status!==fst)return false;if(fg&&s.grade!==fg)return false;return true;});
+  const raw=document.getElementById("srch").value||"";
+  const q2=normalizeAr(raw);
+  const fst=document.getElementById("flt-status").value;const fg=document.getElementById("flt-grade").value;
+  const rows=DB.filter(s=>{
+    if(q2){
+      const fields=[s.name,s.surname,s.reg,s.uid,s.father,s.grade].map(normalizeAr);
+      if(!fields.some(f=>f.includes(q2)))return false;
+    }
+    if(fst&&s.status!==fst)return false;
+    if(fg&&s.grade!==fg)return false;
+    return true;
+  });
   const tbody=document.getElementById("list-body");const empty=document.getElementById("list-empty");
   if(!rows.length){tbody.innerHTML="";empty.style.display="block";return;}empty.style.display="none";
   tbody.innerHTML=rows.map(s=>{
