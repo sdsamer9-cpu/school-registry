@@ -338,7 +338,7 @@ tr:hover td{background:var(--surface2);cursor:pointer}
     <div class="fg g4">
       <div class="fl"><label>مكان القيد</label><input id="f-regplace" type="text" placeholder="دمشق"></div>
       <div class="fl"><label>رقم القيد</label><input id="f-regnum" type="text" placeholder="12345"></div>
-      <div class="fl"><label>رقم المعرّف</label><input id="f-uid" type="text" placeholder="مثال: UID-2024-001"></div>
+      
       <div class="fl"><label>المحافظة التابع لها</label><input id="f-province" type="text" placeholder="دمشق"></div>
       <div class="fl"><label>نتيجة آخر العام</label>
         <select id="f-result">
@@ -390,7 +390,7 @@ const db=getFirestore(app);
 const auth=getAuth(app);
 const ADMIN_EMAILS = ["sdsamer@gmail.com","alnajemamal288@gmail.com"];
 let DB_USER_EMAIL = "";
-const GRADES=["التحضيري"," الأول"," الثاني"," الثالث"," الرابع"," الخامس"," السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
+const GRADES=["التحضيري","الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null,currentUserEmail='';
 function today(){return new Date().toISOString().slice(0,10);}
 function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
