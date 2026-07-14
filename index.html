@@ -61,7 +61,7 @@ body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:v
 .topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;padding:.65rem 1rem;background:var(--bg2);border-radius:12px;border:.5px solid var(--border);flex-wrap:wrap;gap:8px}
 .user-info{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2)}
 .sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-left:4px}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:1.25rem}
+.stats{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:1.25rem}
 .sc{background:var(--bg2);border-radius:10px;padding:.75rem 1rem;text-align:center;border:.5px solid var(--border)}
 .sc-n{font-size:24px;font-weight:500}
 .sc-l{font-size:11px;color:var(--text2);margin-top:2px}
@@ -132,7 +132,7 @@ tr:hover td{background:var(--surface2);cursor:pointer}
 .back-btn{margin-bottom:1rem}
 .topbtn-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 @media(max-width:700px){
-  .stats{grid-template-columns:1fr 1fr}
+  .stats{grid-template-columns:1fr 1fr 1fr}
   .g3,.g4{grid-template-columns:1fr 1fr}
   .info-grid{grid-template-columns:1fr 1fr}
   .school-header{flex-direction:column;text-align:center}
@@ -206,6 +206,8 @@ tr:hover td{background:var(--surface2);cursor:pointer}
   <div class="sc"><div class="sc-n" style="color:var(--green)" id="s2">0</div><div class="sc-l">مستجدون</div></div>
   <div class="sc"><div class="sc-n" style="color:var(--amber)" id="s3">0</div><div class="sc-l">معيدون</div></div>
   <div class="sc"><div class="sc-n" style="color:var(--red)" id="s4">0</div><div class="sc-l">غيابات اليوم</div></div>
+  <div class="sc"><div class="sc-n" style="color:var(--green)" id="s5">0</div><div class="sc-l">محاسبة مثبتة</div></div>
+  <div class="sc"><div class="sc-n" style="color:var(--amber)" id="s6">0</div><div class="sc-l">غير مثبتة</div></div>
 </div>
 
 <div class="tabs">
@@ -268,11 +270,12 @@ tr:hover td{background:var(--surface2);cursor:pointer}
     <div class="sec">البيانات الشخصية</div>
     <div class="fg g4">
       <div class="fl"><label>رقم السجل *</label><input id="f-reg" type="text" placeholder="2024001"></div>
+      <div class="fl"><label>رقم المعرف</label><input id="f-uid" type="text" placeholder="رقم المعرف"></div>
       <div class="fl"><label>الاسم *</label><input id="f-name" type="text" placeholder="الاسم الأول"></div>
       <div class="fl"><label>الشهرة (الكنية) *</label><input id="f-surname" type="text" placeholder="اللقب"></div>
-      <div class="fl"><label>اسم الأب</label><input id="f-father" type="text" placeholder="اسم الأب"></div>
     </div>
     <div class="fg g4">
+      <div class="fl"><label>اسم الأب</label><input id="f-father" type="text" placeholder="اسم الأب"></div>
       <div class="fl"><label>اسم الأم مع الكنية</label><input id="f-mother" type="text" placeholder="اسم الأم والكنية"></div>
       <div class="fl"><label>اسم الجد</label><input id="f-grand" type="text" placeholder="اسم الجد"></div>
       <div class="fl"><label>الجنس</label><select id="f-gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
@@ -296,17 +299,17 @@ tr:hover td{background:var(--surface2);cursor:pointer}
         <select id="f-grade">
           <option value="التحضيري">التحضيري</option>
           <optgroup label="المرحلة الابتدائية">
-            <option value="الصف الأول ابتدائي">الصف الأول ابتدائي</option>
-            <option value="الصف الثاني ابتدائي">الصف الثاني ابتدائي</option>
-            <option value="الصف الثالث ابتدائي">الصف الثالث ابتدائي</option>
-            <option value="الصف الرابع ابتدائي">الصف الرابع ابتدائي</option>
-            <option value="الصف الخامس ابتدائي">الصف الخامس ابتدائي</option>
-            <option value="الصف السادس ابتدائي">الصف السادس ابتدائي</option>
+            <option value="الصف الأول">الصف الأول</option>
+            <option value="الصف الثاني">الصف الثاني</option>
+            <option value="الصف الثالث">الصف الثالث</option>
+            <option value="الصف الرابع">الصف الرابع</option>
+            <option value="الصف الخامس">الصف الخامس</option>
+            <option value="الصف السادس">الصف السادس</option>
           </optgroup>
           <optgroup label="المرحلة الإعدادية">
-            <option value="الصف الأول إعدادي">الصف الأول إعدادي</option>
-            <option value="الصف الثاني إعدادي">الصف الثاني إعدادي</option>
-            <option value="الصف الثالث إعدادي">الصف الثالث إعدادي</option>
+            <option value="السابع">السابع</option>
+            <option value="الثامن">الثامن</option>
+            <option value="التاسع">التاسع</option>
           </optgroup>
           <optgroup label="الثانوي العلمي">
             <option value="الأول الثانوي العلمي">الأول الثانوي العلمي</option>
@@ -335,6 +338,7 @@ tr:hover td{background:var(--surface2);cursor:pointer}
     <div class="fg g4">
       <div class="fl"><label>مكان القيد</label><input id="f-regplace" type="text" placeholder="دمشق"></div>
       <div class="fl"><label>رقم القيد</label><input id="f-regnum" type="text" placeholder="12345"></div>
+      <div class="fl"><label>رقم المعرّف</label><input id="f-uid" type="text" placeholder="مثال: UID-2024-001"></div>
       <div class="fl"><label>المحافظة التابع لها</label><input id="f-province" type="text" placeholder="دمشق"></div>
       <div class="fl"><label>نتيجة آخر العام</label>
         <select id="f-result">
@@ -386,7 +390,7 @@ const db=getFirestore(app);
 const auth=getAuth(app);
 const ADMIN_EMAILS = ["sdsamer@gmail.com","alnajemamal288@gmail.com"];
 let DB_USER_EMAIL = "";
-const GRADES=["التحضيري","الصف الأول ابتدائي","الصف الثاني ابتدائي","الصف الثالث ابتدائي","الصف الرابع ابتدائي","الصف الخامس ابتدائي","الصف السادس ابتدائي","الصف الأول إعدادي","الصف الثاني إعدادي","الصف الثالث إعدادي","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
+const GRADES=["التحضيري","الصف الأول","الصف الثاني","الصف الثالث","الصف الرابع","الصف الخامس","الصف السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null,currentUserEmail='';
 function today(){return new Date().toISOString().slice(0,10);}
 function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
@@ -422,7 +426,7 @@ window.showPane=function(p){document.querySelectorAll(".pane").forEach(el=>el.cl
 window.switchTab=p=>window.showPane(p);
 window.toggleRepeat=function(){document.getElementById("repeat-wrap").style.display=document.getElementById("f-status").value==="معيد"?"flex":"none";};
 window.clearForm=function(){
-  ["f-reg","f-name","f-surname","f-father","f-mother","f-grand","f-birthplace","f-dob","f-nat","f-natid","f-phone","f-country","f-address","f-repeat","f-regplace","f-regnum","f-province","f-notes"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  ["f-reg","f-uid","f-name","f-surname","f-father","f-mother","f-grand","f-birthplace","f-dob","f-nat","f-natid","f-phone","f-country","f-address","f-repeat","f-regplace","f-regnum","f-province","f-notes"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
   ["f-gender","f-religion","f-grade","f-lang","f-status","f-result","f-accounting"].forEach(id=>{const el=document.getElementById(id);if(el)el.selectedIndex=0;});
   document.getElementById("f-gender").value="ذكر";document.getElementById("f-religion").value="مسلم";document.getElementById("f-grade").value="التحضيري";document.getElementById("f-lang").value="لا يوجد";document.getElementById("f-status").value="مستجد";document.getElementById("f-result").value="";document.getElementById("f-accounting").value="مثبت";
   document.getElementById("repeat-wrap").style.display="none";document.getElementById("form-title").textContent="إضافة طالب جديد";document.getElementById("save-btn").innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ الطالب';editingId=null;
@@ -433,10 +437,28 @@ window.saveStudent=async function(){
   if(!reg||!name||!surname){alert("يرجى إدخال رقم السجل والاسم والشهرة.");return;}
   if(!editingId&&DB.find(s=>s.reg===reg)){alert("رقم السجل مكرر.");return;}
   const btn=document.getElementById("save-btn");btn.textContent="جارٍ الحفظ...";btn.disabled=true;
-  const student={reg,name,surname,father:document.getElementById("f-father").value.trim(),mother:document.getElementById("f-mother").value.trim(),grand:document.getElementById("f-grand").value.trim(),gender:document.getElementById("f-gender").value,religion:document.getElementById("f-religion").value,birthplace:document.getElementById("f-birthplace").value.trim(),dob:document.getElementById("f-dob").value,nat:document.getElementById("f-nat").value.trim(),natid:document.getElementById("f-natid").value.trim(),phone:document.getElementById("f-phone").value.trim(),country:document.getElementById("f-country").value.trim(),address:document.getElementById("f-address").value.trim(),grade:document.getElementById("f-grade").value,lang:document.getElementById("f-lang").value,status:document.getElementById("f-status").value,repeat:document.getElementById("f-repeat").value.trim(),regplace:document.getElementById("f-regplace").value.trim(),regnum:document.getElementById("f-regnum").value.trim(),province:document.getElementById("f-province").value.trim(),result:document.getElementById("f-result").value,accounting:document.getElementById("f-accounting").value,notes:document.getElementById("f-notes").value.trim()};
+  const student={reg,uid:document.getElementById("f-uid").value.trim(),name,surname,father:document.getElementById("f-father").value.trim(),mother:document.getElementById("f-mother").value.trim(),grand:document.getElementById("f-grand").value.trim(),gender:document.getElementById("f-gender").value,religion:document.getElementById("f-religion").value,birthplace:document.getElementById("f-birthplace").value.trim(),dob:document.getElementById("f-dob").value,nat:document.getElementById("f-nat").value.trim(),natid:document.getElementById("f-natid").value.trim(),phone:document.getElementById("f-phone").value.trim(),country:document.getElementById("f-country").value.trim(),address:document.getElementById("f-address").value.trim(),grade:document.getElementById("f-grade").value,lang:document.getElementById("f-lang").value,status:document.getElementById("f-status").value,repeat:document.getElementById("f-repeat").value.trim(),regplace:document.getElementById("f-regplace").value.trim(),regnum:document.getElementById("f-regnum").value.trim(),province:document.getElementById("f-province").value.trim(),result:document.getElementById("f-result").value,accounting:document.getElementById("f-accounting").value,notes:document.getElementById("f-notes").value.trim()};
   try{
-    if(editingId){const ex=DB.find(s=>s.firestoreId===editingId)||{};await setDoc(doc(db,"students",editingId),{...student,absence:ex.absence||[],createdAt:ex.createdAt||Date.now()});showToast("✅ تم تحديث بيانات الطالب");}
-    else{await addDoc(collection(db,"students"),{...student,absence:[],createdAt:Date.now()});showToast("✅ تم إضافة الطالب بنجاح");}
+    if(editingId){
+      const ex=DB.find(s=>s.firestoreId===editingId)||{};
+      await setDoc(doc(db,"students",editingId),{
+        ...student,
+        absence:ex.absence||[],
+        createdAt:ex.createdAt||Date.now(),
+        editedAt:new Date().toLocaleString("ar-SY"),
+        editedBy:DB_USER_EMAIL
+      });
+      showToast("✅ تم تحديث بيانات الطالب");
+    } else {
+      await addDoc(collection(db,"students"),{
+        ...student,
+        absence:[],
+        createdAt:Date.now(),
+        editedAt:"",
+        editedBy:""
+      });
+      showToast("✅ تم إضافة الطالب بنجاح");
+    }
     window.clearForm();window.showPane("list");
   }catch(e){alert("خطأ في الحفظ: "+e.message);}
   btn.innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ الطالب';btn.disabled=false;
@@ -444,11 +466,27 @@ window.saveStudent=async function(){
 window.editStudent=function(fid){
   if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية التعديل.");return;}
   const s=DB.find(x=>x.firestoreId===fid);if(!s)return;editingId=fid;
-  ["reg","name","surname","father","mother","grand","birthplace","dob","nat","natid","phone","country","address","repeat","regplace","regnum","province","notes"].forEach(f=>{const el=document.getElementById("f-"+f);if(el)el.value=s[f]||"";});
+  ["reg","uid","name","surname","father","mother","grand","birthplace","dob","nat","natid","phone","country","address","repeat","regplace","regnum","province","notes"].forEach(f=>{const el=document.getElementById("f-"+f);if(el)el.value=s[f]||"";});
   document.getElementById("f-gender").value=s.gender||"ذكر";document.getElementById("f-religion").value=s.religion||"مسلم";document.getElementById("f-grade").value=s.grade||"التحضيري";document.getElementById("f-lang").value=s.lang||"لا يوجد";document.getElementById("f-status").value=s.status||"مستجد";document.getElementById("f-result").value=s.result||"";document.getElementById("f-accounting").value=s.accounting||"مثبت";
   window.toggleRepeat();document.getElementById("form-title").textContent="تعديل بيانات الطالب";document.getElementById("save-btn").innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ التعديلات';window.showPane("add");
 };
-window.deleteStudent=async function(fid){if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية الحذف.");return;}if(!confirm("حذف هذا الطالب نهائياً؟"))return;try{await deleteDoc(doc(db,"students",fid));showToast("🗑️ تم حذف الطالب");}catch(e){alert("خطأ: "+e.message);}};
+window.deleteStudent=async function(fid){
+  if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية الحذف.");return;}
+  if(!confirm("حذف هذا الطالب نهائياً؟"))return;
+  try{
+    const s=DB.find(x=>x.firestoreId===fid);
+    if(s){
+      await addDoc(collection(db,"deletedStudents"),{
+        ...s,
+        firestoreId:undefined,
+        deletedAt:new Date().toLocaleString("ar-SY"),
+        deletedBy:DB_USER_EMAIL
+      });
+    }
+    await deleteDoc(doc(db,"students",fid));
+    showToast("🗑️ تم حذف الطالب وتسجيل العملية");
+  }catch(e){alert("خطأ: "+e.message);}
+};
 window.openProfile=function(fid){
   const s=DB.find(x=>x.firestoreId===fid);if(!s)return;
   const initials=(s.name?.[0]||"")+(s.surname?.[0]||"");
@@ -464,7 +502,8 @@ window.openProfile=function(fid){
     </div>
     <div class="sec">البيانات الشخصية</div>
     <div class="info-grid">
-      <div class="ir"><label>الاسم</label><span>${s.name}</span></div>
+      <div class="ir"><label>رقم المعرف</label><span>${s.uid||"—"}</span></div>
+      <div class="ir"><label>رقم المعرف</label><span>${s.uid||"—"}</span></div><div class="ir"><label>الاسم</label><span>${s.name}</span></div>
       <div class="ir"><label>الشهرة</label><span>${s.surname||"—"}</span></div>
       <div class="ir"><label>اسم الأب</label><span>${s.father||"—"}</span></div>
       <div class="ir"><label>اسم الأم</label><span>${s.mother||"—"}</span></div>
@@ -486,11 +525,24 @@ window.openProfile=function(fid){
       <div class="ir"><label>وضع الطالب</label><span>${s.status}</span></div>
       <div class="ir"><label>مكان القيد</label><span>${s.regplace||"—"}</span></div>
       <div class="ir"><label>رقم القيد</label><span>${s.regnum||"—"}</span></div>
+      <div class="ir"><label>رقم المعرّف</label><span>${s.uid||"—"}</span></div>
       <div class="ir"><label>المحافظة</label><span>${s.province||"—"}</span></div>
       <div class="ir"><label>نتيجة آخر العام</label><span>${s.result||"—"}</span></div>
       <div class="ir"><label>المحاسبة</label><span>${s.accounting||"—"}</span></div>
       ${s.status==="معيد"&&s.repeat?`<div class="ir" style="grid-column:1/-1"><label>الصفوف التي أعادها</label><span>${s.repeat}</span></div>`:""}
       ${s.notes?`<div class="ir" style="grid-column:1/-1"><label>ملاحظات</label><span>${s.notes}</span></div>`:""}
+      ${s.auditLog&&s.auditLog.length>0?`<div class="ir" style="grid-column:1/-1">
+        <label>سجل التعديلات</label>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+          ${s.auditLog.slice().reverse().map(a=>`<div style="background:var(--bg2);border-radius:6px;padding:5px 10px;font-size:11px;display:flex;gap:8px;align-items:center">
+            <span style="color:var(--accent)">${a.action}</span>
+            <span style="color:var(--text2)">بواسطة: ${a.by}</span>
+            <span style="color:var(--text3)">${a.at}</span>
+          </div>`).join("")}
+        </div>
+      </div>`:""}
+      ${s.editedAt?`<div class="ir" style="grid-column:1/-1;background:rgba(91,141,238,.08);border-radius:8px;padding:8px 10px"><label><i class="ti ti-edit" style="margin-left:4px;color:var(--accent)"></i>آخر تعديل</label><span>${s.editedAt} — بواسطة: ${s.editedBy}</span></div>`:""}
+      ${s.editedAt?`<div class="ir" style="grid-column:1/-1;background:rgba(232,169,74,.08);border-radius:8px;padding:8px 10px;border:.5px solid rgba(232,169,74,.2)"><label style="color:var(--amber)">آخر تعديل</label><span style="color:var(--amber)">${s.editedAt} — بواسطة: ${s.editedBy}</span></div>`:""}
     </div>
     <div class="sec">الغياب</div>
     <div class="abs-stats">
@@ -529,7 +581,7 @@ function renderAbsence(){
   allAbs.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>السجل</th><th>الاسم والشهرة</th><th>الصف</th><th>النوع</th><th>السبب</th></tr></thead><tbody>${all.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<tr><td>${a.date}</td><td>${a.sreg}</td><td>${a.sname}</td><td style="font-size:11px">${a.sgrade||""}</td><td><span class="badge ${tc}">${a.type}</span></td><td>${a.reason||"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
 }
 window.saveDayAbsence=async function(fid,date){const s=DB.find(x=>x.firestoreId===fid);if(!s)return;const type=document.getElementById(`abs-t-${fid}`).value;const reason=document.getElementById(`abs-r-${fid}`).value.trim();let absence=(s.absence||[]).filter(a=>a.date!==date);if(type)absence.push({date,type,reason});try{await updateDoc(doc(db,"students",fid),{absence});showToast("✅ تم حفظ الغياب");}catch(e){alert("خطأ: "+e.message);}};
-function updateStats(){document.getElementById("s1").textContent=DB.length;document.getElementById("s2").textContent=DB.filter(s=>s.status==="مستجد").length;document.getElementById("s3").textContent=DB.filter(s=>s.status==="معيد").length;const t=today();document.getElementById("s4").textContent=DB.reduce((n,s)=>n+((s.absence||[]).filter(a=>a.date===t&&a.type==="غياب").length),0);}
+function updateStats(){document.getElementById("s1").textContent=DB.length;document.getElementById("s2").textContent=DB.filter(s=>s.status==="مستجد").length;document.getElementById("s3").textContent=DB.filter(s=>s.status==="معيد").length;const t=today();document.getElementById("s4").textContent=DB.reduce((n,s)=>n+((s.absence||[]).filter(a=>a.date===t&&a.type==="غياب").length),0);document.getElementById("s5").textContent=DB.filter(s=>s.accounting==="مثبت").length;document.getElementById("s6").textContent=DB.filter(s=>s.accounting==="غير مثبت").length;}
 window.importExcel=async function(input){
   const file=input.files[0]; if(!file)return;
   const reader=new FileReader();
@@ -609,7 +661,7 @@ window.importExcel=async function(input){
   };
   reader.readAsBinaryString(file);
 };
-window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
+window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","رقم المعرف","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.uid||"",s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","رقم المعرف","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.uid,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
 document.getElementById("abs-date-global").addEventListener("change",renderAbsence);
 populateGradeFilter();
 </script>
