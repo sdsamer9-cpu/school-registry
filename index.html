@@ -472,19 +472,20 @@ window.editStudent=function(fid){
 };
 window.deleteStudent=async function(fid){
   if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية الحذف.");return;}
-  if(!confirm("حذف هذا الطالب نهائياً؟"))return;
+  const s=DB.find(x=>x.firestoreId===fid);
+  const sname=s?s.name+" "+s.surname:"";
+  if(!confirm("هل تريد حذف الطالب: "+sname+"؟"))return;
   try{
-    const s=DB.find(x=>x.firestoreId===fid);
     if(s){
-      await addDoc(collection(db,"deletedStudents"),{
-        ...s,
-        firestoreId:undefined,
-        deletedAt:new Date().toLocaleString("ar-SY"),
-        deletedBy:DB_USER_EMAIL
-      });
+      const {firestoreId:_removed,...studentData}=s;
+      const cleanData={};
+      Object.keys(studentData).forEach(k=>{if(studentData[k]!==undefined)cleanData[k]=studentData[k];});
+      cleanData.deletedAt=new Date().toLocaleString("ar-SY");
+      cleanData.deletedBy=DB_USER_EMAIL;
+      await addDoc(collection(db,"deletedStudents"),cleanData);
     }
     await deleteDoc(doc(db,"students",fid));
-    showToast("🗑️ تم حذف الطالب وتسجيل العملية");
+    showToast("🗑️ تم حذف الطالب: "+sname);
   }catch(e){alert("خطأ: "+e.message);}
 };
 window.openProfile=function(fid){
