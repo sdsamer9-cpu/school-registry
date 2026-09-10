@@ -66,6 +66,9 @@ body{font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--bg);color:v
 .sc-n{font-size:24px;font-weight:500}
 .sc-l{font-size:11px;color:var(--text2);margin-top:2px}
 .tabs{display:flex;gap:4px;margin-bottom:1.25rem;background:var(--bg2);padding:5px;border-radius:10px;border:.5px solid var(--border)}
+.gtab{padding:6px 13px;font-size:12px;cursor:pointer;color:var(--text2);border:.5px solid var(--border2);background:var(--bg2);border-radius:20px;transition:all .15s;font-family:inherit;font-weight:500}
+.gtab.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.gtab:hover:not(.on){background:var(--bg3);color:var(--text1)}
 .tab{flex:1;padding:7px 10px;font-size:13px;cursor:pointer;color:var(--text2);border:none;background:transparent;border-radius:8px;transition:all .15s;font-family:inherit;text-align:center}
 .tab.on{background:var(--accent);color:#fff;font-weight:500}
 .tab:hover:not(.on){background:var(--bg3);color:var(--text1)}
@@ -213,6 +216,7 @@ tr:hover td{background:var(--surface2);cursor:pointer}
 <div class="tabs">
   <button class="tab on" onclick="switchTab('list')"><i class="ti ti-list" style="margin-left:4px"></i>قائمة الطلاب</button>
   <button class="tab" onclick="switchTab('absence')"><i class="ti ti-calendar-off" style="margin-left:4px"></i>الغياب اليومي</button>
+  <button class="tab" id="teachers-tab-btn" onclick="switchTab('teachers')" style="display:none"><i class="ti ti-chalkboard" style="margin-left:4px"></i>المدرسون</button>
 </div>
 
 <!-- قائمة الطلاب -->
@@ -248,12 +252,118 @@ tr:hover td{background:var(--surface2);cursor:pointer}
       <h3 style="font-size:14px;font-weight:500;color:var(--text1)"><i class="ti ti-calendar-off" style="margin-left:5px;color:var(--accent)"></i>تسجيل الغياب اليومي</h3>
       <input type="date" id="abs-date-global" style="width:160px">
     </div>
+    <div id="abs-grade-tabs" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.75rem"></div>
+    <div class="search-row" style="margin-bottom:1rem">
+      <input type="text" id="abs-srch" placeholder="بحث بالاسم أو السجل..." oninput="renderAbsence()">
+    </div>
     <div id="daily-list"></div>
   </div>
   <div class="card">
     <div class="sec">سجل الغيابات الكاملة</div>
     <div id="all-absence-list"></div>
   </div>
+</div>
+
+<!-- قائمة المدرسين -->
+<div id="pane-teachers" class="pane">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.9rem;flex-wrap:wrap;gap:8px">
+      <h3 style="font-size:14px;font-weight:500;color:var(--text1)"><i class="ti ti-chalkboard" style="margin-left:5px;color:var(--accent)"></i>قائمة المدرسين</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-outline btn-sm" onclick="showTeacherAbsenceLog()"><i class="ti ti-calendar-off" style="margin-left:4px"></i>تاريخ غياب المدرسين</button>
+        <span id="add-teacher-btn" style="display:none"><button class="btn btn-primary btn-sm" onclick="clearTeacherForm();showPane('teacher-add')"><i class="ti ti-user-plus" style="margin-left:4px"></i>مدرس جديد</button></span>
+      </div>
+    </div>
+    <div class="search-row">
+      <input type="text" id="t-srch" placeholder="بحث بالاسم أو الشهرة أو المسمى الوظيفي..." oninput="renderTeacherList()">
+      <select id="t-flt-gender" onchange="renderTeacherList()" style="width:120px">
+        <option value="">كل الأجناس</option><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option>
+      </select>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th>#</th><th>الاسم والشهرة</th><th>المسمى الوظيفي</th><th>الجنس</th><th>الوضع العائلي</th><th>القيد</th><th>إجراءات</th>
+        </tr></thead>
+        <tbody id="teacher-list-body"></tbody>
+      </table>
+    </div>
+    <div id="teacher-list-empty" class="empty-state" style="display:none">
+      <i class="ti ti-chalkboard" style="font-size:30px;display:block;margin-bottom:8px;color:var(--text3)"></i>
+      لا يوجد مدرسون. أضف أول مدرس.
+    </div>
+  </div>
+</div>
+
+<!-- سجل غياب المدرسين -->
+<div id="pane-teacher-absence" class="pane">
+  <div class="back-btn">
+    <button class="btn btn-outline btn-sm" onclick="showPane('teachers')">
+      <i class="ti ti-arrow-right" style="margin-left:4px"></i>عودة لقائمة المدرسين
+    </button>
+  </div>
+  <div class="card">
+    <div class="sec"><i class="ti ti-calendar-off" style="margin-left:5px;color:var(--accent)"></i>سجل غياب المدرسين الكامل</div>
+    <div id="teacher-all-absence-list"></div>
+  </div>
+</div>
+
+<!-- نموذج تسجيل مدرس -->
+<div id="pane-teacher-add" class="pane">
+  <div class="card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:16px;font-weight:500;color:var(--text1)">
+        <i class="ti ti-user-plus" style="margin-left:6px;color:var(--accent)"></i>
+        <span id="t-form-title">إضافة مدرس جديد</span>
+      </h2>
+      <button class="btn btn-outline btn-sm" onclick="showPane('teachers')"><i class="ti ti-arrow-right" style="margin-left:4px"></i>عودة</button>
+    </div>
+
+    <div class="sec">البيانات الشخصية</div>
+    <div class="fg g4">
+      <div class="fl"><label>الاسم *</label><input id="t-name" type="text" placeholder="الاسم الأول"></div>
+      <div class="fl"><label>الشهرة (الكنية) *</label><input id="t-surname" type="text" placeholder="اللقب"></div>
+      <div class="fl"><label>اسم الأب</label><input id="t-father" type="text" placeholder="اسم الأب"></div>
+      <div class="fl"><label>اسم الأم وشهرتها</label><input id="t-mother" type="text" placeholder="اسم الأم والكنية"></div>
+    </div>
+    <div class="fg g4">
+      <div class="fl"><label>تاريخ الولادة</label><input id="t-dob" type="date"></div>
+      <div class="fl"><label>مكان الولادة</label><input id="t-birthplace" type="text" placeholder="المدينة / البلد"></div>
+      <div class="fl"><label>القيد</label><input id="t-reg" type="text" placeholder="رقم القيد"></div>
+      <div class="fl"><label>الجنس</label><select id="t-gender"><option value="ذكر">ذكر</option><option value="أنثى">أنثى</option></select></div>
+    </div>
+    <div class="fg g3">
+      <div class="fl"><label>الوضع العائلي</label>
+        <select id="t-marital"><option value="أعزب">أعزب</option><option value="متزوج">متزوج</option><option value="مطلق">مطلق</option><option value="أرمل">أرمل</option></select>
+      </div>
+      <div class="fl"><label>عدد الأبناء</label><input id="t-children" type="number" min="0" placeholder="0"></div>
+      <div class="fl"><label>المسمى الوظيفي</label><input id="t-job" type="text" placeholder="مثال: مدرس رياضيات"></div>
+    </div>
+
+    <div class="sec" style="margin-top:.5rem">المؤهل العلمي</div>
+    <div class="fg g3">
+      <div class="fl"><label>نوع الشهادة</label><input id="t-degree" type="text" placeholder="إجازة / ماجستير / دكتوراه..."></div>
+      <div class="fl"><label>اسم الكلية أو المعهد</label><input id="t-college" type="text" placeholder="اسم الكلية أو المعهد"></div>
+      <div class="fl"><label>عام الحصول عليها</label><input id="t-degree-year" type="text" placeholder="2015"></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-outline" onclick="clearTeacherForm()">مسح الحقول</button>
+      <button class="btn btn-primary" id="t-save-btn" onclick="saveTeacher()">
+        <i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ المدرس
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- الملف الشخصي للمدرس -->
+<div id="pane-teacher-profile" class="pane">
+  <div class="back-btn">
+    <button class="btn btn-outline btn-sm" onclick="showPane('teachers')">
+      <i class="ti ti-arrow-right" style="margin-left:4px"></i>عودة لقائمة المدرسين
+    </button>
+  </div>
+  <div id="teacher-profile-content"></div>
 </div>
 
 <!-- نموذج التسجيل -->
@@ -388,10 +498,11 @@ const firebaseConfig={apiKey:"AIzaSyC-ihYPTU2MfONgCEfF_4Kcdw5uuLSYmcA",authDomai
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const auth=getAuth(app);
-const ADMIN_EMAILS = ["sdsamer@gmail.com","alnajemamal288@gmail.com"];
+const ADMIN_EMAILS = ["sdsamer@gmail.com"];
 let DB_USER_EMAIL = "";
 const GRADES=["التحضيري","الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null,currentUserEmail='';
+let TDB=[],editingTeacherId=null,unsubscribeTeachers=null;
 function today(){return new Date().toISOString().slice(0,10);}
 function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
 function populateGradeFilter(){const sel=document.getElementById("flt-grade");const cur=sel.value;sel.innerHTML='<option value="">كل الصفوف</option>';GRADES.forEach(g=>{const o=document.createElement("option");o.value=g;o.textContent=g;if(g===cur)o.selected=true;sel.appendChild(o);});}
@@ -400,10 +511,10 @@ onAuthStateChanged(auth,user=>{
   if(user){document.getElementById("login-screen").classList.remove("show");document.getElementById("app").classList.add("show");document.getElementById("user-email-display").textContent=user.email;
     DB_USER_EMAIL=user.email;currentUserEmail=user.email;
     const adminBtns=document.getElementById("admin-btns");
-    if(ADMIN_EMAILS.includes(user.email)){adminBtns.style.display="flex";document.getElementById("add-student-btn").style.display="inline-flex";}
-    else{adminBtns.style.display="none";document.getElementById("add-student-btn").style.display="none";}
-    startListening();}
-  else{document.getElementById("login-screen").classList.add("show");document.getElementById("app").classList.remove("show");if(unsubscribe){unsubscribe();unsubscribe=null;}DB=[];}
+    if(ADMIN_EMAILS.includes(user.email)){adminBtns.style.display="flex";document.getElementById("add-student-btn").style.display="inline-flex";document.getElementById("add-teacher-btn").style.display="inline-flex";document.getElementById("teachers-tab-btn").style.display="inline-flex";}
+    else{adminBtns.style.display="none";document.getElementById("add-student-btn").style.display="none";document.getElementById("add-teacher-btn").style.display="none";document.getElementById("teachers-tab-btn").style.display="none";if(document.getElementById("pane-teachers").classList.contains("on")||document.getElementById("pane-teacher-add").classList.contains("on")||document.getElementById("pane-teacher-profile").classList.contains("on")||document.getElementById("pane-teacher-absence").classList.contains("on")){showPane("list");}}
+    startListening();if(ADMIN_EMAILS.includes(user.email))startListeningTeachers();}
+  else{document.getElementById("login-screen").classList.add("show");document.getElementById("app").classList.remove("show");if(unsubscribe){unsubscribe();unsubscribe=null;}if(unsubscribeTeachers){unsubscribeTeachers();unsubscribeTeachers=null;}DB=[];TDB=[];}
 });
 window.doLogin=async function(){
   const email=document.getElementById("login-email").value.trim();
@@ -422,7 +533,13 @@ function startListening(){
   const q=query(collection(db,"students"),orderBy("createdAt","asc"));
   unsubscribe=onSnapshot(q,snapshot=>{DB=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));updateStats();renderList();populateGradeFilter();if(document.getElementById("pane-absence").classList.contains("on"))renderAbsence();},err=>{console.error(err);showToast("تعذّر الاتصال بقاعدة البيانات");});
 }
-window.showPane=function(p){document.querySelectorAll(".pane").forEach(el=>el.classList.remove("on"));document.getElementById("pane-"+p).classList.add("on");document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("on",["list","absence"][i]===p));if(p==="absence")renderAbsence();if(p==="list"){renderList();populateGradeFilter();}};
+function startListeningTeachers(){
+  const q=query(collection(db,"teachers"),orderBy("createdAt","asc"));
+  unsubscribeTeachers=onSnapshot(q,snapshot=>{TDB=snapshot.docs.map(d=>({firestoreId:d.id,...d.data()}));if(document.getElementById("pane-teachers").classList.contains("on"))renderTeacherList();if(document.getElementById("pane-teacher-absence").classList.contains("on"))renderTeacherAbsenceLog();},err=>{console.error(err);showToast("تعذّر الاتصال بقاعدة بيانات المدرسين");});
+}
+window.showPane=function(p){
+  if(p.startsWith("teacher")&&!ADMIN_EMAILS.includes(DB_USER_EMAIL)){p="list";}
+  document.querySelectorAll(".pane").forEach(el=>el.classList.remove("on"));document.getElementById("pane-"+p).classList.add("on");document.querySelectorAll(".tab").forEach((t,i)=>t.classList.toggle("on",["list","absence","teachers"][i]===p));if(p==="absence")renderAbsence();if(p==="list"){renderList();populateGradeFilter();}if(p==="teachers")renderTeacherList();};
 window.switchTab=p=>window.showPane(p);
 window.toggleRepeat=function(){document.getElementById("repeat-wrap").style.display=document.getElementById("f-status").value==="معيد"?"flex":"none";};
 window.clearForm=function(){
@@ -584,10 +701,29 @@ window.renderList=function renderList(){
     return`<tr onclick="openProfile('${s.firestoreId}')"><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||"—"}</td><td style="font-size:11px">${s.grade||"—"}</td><td><span class="badge ${gc}">${s.gender}</span></td><td><span class="badge ${stc}">${s.status}</span></td><td><span class="badge ${ac}">${s.accounting||"—"}</span></td><td>${abs>0?`<span class="badge br">${abs}</span>`:'<span style="color:var(--text3)">0</span>'}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn btn-outline btn-sm" onclick="editStudent('${s.firestoreId}')"><i class="ti ti-edit"></i></button>`:""}${DB.find(x=>x.firestoreId===s.firestoreId)&&ADMIN_EMAILS.includes(currentUserEmail)?`${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn-red-sm" onclick="deleteStudent('${s.firestoreId}')"><i class="ti ti-trash"></i></button>`:""}`:""}</div></td></tr>`;
   }).join("");
 }
+let absGradeFilter="";
+window.setAbsGrade=function(g){absGradeFilter=g;renderAbsence();};
 window.renderAbsence=function renderAbsence(){
   const d=document.getElementById("abs-date-global").value||today();document.getElementById("abs-date-global").value=d;
-  const daily=document.getElementById("daily-list");if(!DB.length){daily.innerHTML='<div class="empty-state">لا يوجد طلاب مسجّلون.</div>';return;}
-  daily.innerHTML=`<p style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:.75rem"><i class="ti ti-calendar" style="margin-left:5px;color:var(--accent)"></i>تسجيل غياب يوم: ${d}</p><div class="tbl-wrap"><table><thead><tr><th>السجل</th><th>الاسم</th><th>الشهرة</th><th>الصف</th><th>الحالة</th><th>السبب</th><th>تسجيل</th></tr></thead><tbody>${DB.map(s=>{const ex=(s.absence||[]).find(a=>a.date===d);return`<tr><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||""}</td><td style="font-size:11px">${s.grade||""}</td><td><select id="abs-t-${s.firestoreId}" style="padding:4px 6px;font-size:12px"><option value="" ${!ex?"selected":""}>حاضر</option><option value="غياب" ${ex&&ex.type==="غياب"?"selected":""}>غياب</option><option value="تأخر" ${ex&&ex.type==="تأخر"?"selected":""}>تأخر</option><option value="إذن مسبق" ${ex&&ex.type==="إذن مسبق"?"selected":""}>إذن مسبق</option></select></td><td><input type="text" id="abs-r-${s.firestoreId}" value="${ex?ex.reason:""}" placeholder="السبب" style="padding:4px 7px;font-size:12px"></td><td><button class="btn btn-primary btn-sm" onclick="saveDayAbsence('${s.firestoreId}','${d}')">حفظ</button></td></tr>`;}).join("")}</tbody></table></div>`;
+  const daily=document.getElementById("daily-list");
+  const gtabs=document.getElementById("abs-grade-tabs");
+  if(!DB.length){daily.innerHTML='<div class="empty-state">لا يوجد طلاب مسجّلون.</div>';gtabs.innerHTML="";return;}
+  const gradesPresent=GRADES.filter(g=>DB.some(s=>s.grade===g));
+  gtabs.innerHTML=`<button class="gtab ${absGradeFilter===""?"on":""}" onclick="setAbsGrade('')">الكل (${DB.length})</button>`+
+    gradesPresent.map(g=>`<button class="gtab ${absGradeFilter===g?"on":""}" onclick="setAbsGrade('${g}')">${g} (${DB.filter(s=>s.grade===g).length})</button>`).join("");
+  const searchRaw=document.getElementById("abs-srch")?document.getElementById("abs-srch").value:"";
+  const searchQ=normalizeAr(searchRaw);
+  let filtered=absGradeFilter?DB.filter(s=>s.grade===absGradeFilter):DB;
+  if(searchQ){filtered=filtered.filter(s=>{const fields=[s.name,s.surname,s.reg].map(v=>normalizeAr(v||""));return fields.some(f=>f.includes(searchQ));});}
+  const sorted=filtered.slice().sort((a,b)=>{
+    const gi=GRADES.indexOf(a.grade||"")-GRADES.indexOf(b.grade||"");
+    if(gi!==0)return gi;
+    return ((a.name||"")+(a.surname||"")).localeCompare((b.name||"")+(b.surname||""),"ar");
+  });
+  if(!sorted.length){daily.innerHTML='<div class="empty-state">لا يوجد طلاب مطابقون.</div>';}
+  else{
+  daily.innerHTML=`<p style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:.75rem"><i class="ti ti-calendar" style="margin-left:5px;color:var(--accent)"></i>تسجيل غياب يوم: ${d}${absGradeFilter?` — الصف: ${absGradeFilter}`:""}</p><div class="tbl-wrap"><table><thead><tr><th>#</th><th>السجل</th><th>الاسم</th><th>الشهرة</th><th>الصف</th><th>الحالة</th><th>السبب</th><th>تسجيل</th></tr></thead><tbody>${sorted.map((s,i)=>{const ex=(s.absence||[]).find(a=>a.date===d);return`<tr><td>${i+1}</td><td>${s.reg}</td><td>${s.name}</td><td>${s.surname||""}</td><td style="font-size:11px">${s.grade||""}</td><td><select id="abs-t-${s.firestoreId}" style="padding:4px 6px;font-size:12px"><option value="" ${!ex?"selected":""}>حاضر</option><option value="غياب" ${ex&&ex.type==="غياب"?"selected":""}>غياب</option><option value="تأخر" ${ex&&ex.type==="تأخر"?"selected":""}>تأخر</option><option value="إذن مسبق" ${ex&&ex.type==="إذن مسبق"?"selected":""}>إذن مسبق</option></select></td><td><input type="text" id="abs-r-${s.firestoreId}" value="${ex?ex.reason:""}" placeholder="السبب" style="padding:4px 7px;font-size:12px"></td><td><button class="btn btn-primary btn-sm" onclick="saveDayAbsence('${s.firestoreId}','${d}')">حفظ</button></td></tr>`;}).join("")}</tbody></table></div>`;
+  }
   const allAbs=document.getElementById("all-absence-list");let all=[];DB.forEach(s=>(s.absence||[]).forEach(a=>all.push({...a,sname:s.name+" "+s.surname,sreg:s.reg,sgrade:s.grade})));all.sort((a,b)=>b.date.localeCompare(a.date));
   if(!all.length){allAbs.innerHTML='<div class="empty-state">لا توجد غيابات مسجّلة.</div>';return;}
   allAbs.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>السجل</th><th>الاسم والشهرة</th><th>الصف</th><th>النوع</th><th>السبب</th></tr></thead><tbody>${all.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<tr><td>${a.date}</td><td>${a.sreg}</td><td>${a.sname}</td><td style="font-size:11px">${a.sgrade||""}</td><td><span class="badge ${tc}">${a.type}</span></td><td>${a.reason||"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
@@ -676,6 +812,164 @@ window.importExcel=async function(input){
 window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","رقم المعرف","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.uid||"",s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","رقم المعرف","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.uid,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
 document.getElementById("abs-date-global").addEventListener("change",window.renderAbsence);
 populateGradeFilter();
+
+/* ======================= وحدة المدرسين ======================= */
+window.clearTeacherForm=function(){
+  ["t-name","t-surname","t-father","t-mother","t-dob","t-birthplace","t-reg","t-children","t-job","t-degree","t-college","t-degree-year"].forEach(id=>{const el=document.getElementById(id);if(el)el.value="";});
+  document.getElementById("t-gender").value="ذكر";document.getElementById("t-marital").value="أعزب";
+  document.getElementById("t-form-title").textContent="إضافة مدرس جديد";
+  document.getElementById("t-save-btn").innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ المدرس';
+  editingTeacherId=null;
+};
+window.saveTeacher=async function(){
+  if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية إضافة أو تعديل المدرسين.");return;}
+  const name=document.getElementById("t-name").value.trim();
+  const surname=document.getElementById("t-surname").value.trim();
+  if(!name||!surname){alert("يرجى إدخال الاسم والشهرة.");return;}
+  const btn=document.getElementById("t-save-btn");btn.textContent="جارٍ الحفظ...";btn.disabled=true;
+  const teacher={
+    name,surname,
+    father:document.getElementById("t-father").value.trim(),
+    mother:document.getElementById("t-mother").value.trim(),
+    dob:document.getElementById("t-dob").value,
+    birthplace:document.getElementById("t-birthplace").value.trim(),
+    reg:document.getElementById("t-reg").value.trim(),
+    gender:document.getElementById("t-gender").value,
+    marital:document.getElementById("t-marital").value,
+    children:document.getElementById("t-children").value.trim(),
+    job:document.getElementById("t-job").value.trim(),
+    degree:document.getElementById("t-degree").value.trim(),
+    college:document.getElementById("t-college").value.trim(),
+    degreeYear:document.getElementById("t-degree-year").value.trim()
+  };
+  try{
+    if(editingTeacherId){
+      const ex=TDB.find(t=>t.firestoreId===editingTeacherId)||{};
+      await setDoc(doc(db,"teachers",editingTeacherId),{
+        ...teacher,
+        absence:ex.absence||[],
+        createdAt:ex.createdAt||Date.now(),
+        editedAt:new Date().toLocaleString("ar-SY"),
+        editedBy:DB_USER_EMAIL
+      });
+      showToast("✅ تم تحديث بيانات المدرس");
+    }else{
+      await addDoc(collection(db,"teachers"),{...teacher,absence:[],createdAt:Date.now(),editedAt:"",editedBy:""});
+      showToast("✅ تم إضافة المدرس بنجاح");
+    }
+    window.clearTeacherForm();window.showPane("teachers");
+  }catch(e){alert("خطأ في الحفظ: "+e.message);}
+  btn.innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ المدرس';btn.disabled=false;
+};
+window.editTeacher=function(fid){
+  if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية التعديل.");return;}
+  const t=TDB.find(x=>x.firestoreId===fid);if(!t)return;editingTeacherId=fid;
+  ["name","surname","father","mother","dob","birthplace","reg","children","job","degree","college"].forEach(f=>{const el=document.getElementById("t-"+f);if(el)el.value=t[f]||"";});
+  document.getElementById("t-degree-year").value=t.degreeYear||"";
+  document.getElementById("t-gender").value=t.gender||"ذكر";
+  document.getElementById("t-marital").value=t.marital||"أعزب";
+  document.getElementById("t-form-title").textContent="تعديل بيانات المدرس";
+  document.getElementById("t-save-btn").innerHTML='<i class="ti ti-device-floppy" style="margin-left:4px"></i>حفظ التعديلات';
+  window.showPane("teacher-add");
+};
+window.deleteTeacher=async function(fid){
+  if(!ADMIN_EMAILS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية الحذف.");return;}
+  const t=TDB.find(x=>x.firestoreId===fid);const tname=t?t.name+" "+(t.surname||""):"";
+  if(!confirm("هل تريد حذف المدرس: "+tname+"؟"))return;
+  try{await deleteDoc(doc(db,"teachers",fid));showToast("🗑️ تم حذف المدرس: "+tname);}
+  catch(e){alert("خطأ: "+e.message);}
+};
+window.renderTeacherList=function renderTeacherList(){
+  const tbody=document.getElementById("teacher-list-body");if(!tbody)return;
+  const empty=document.getElementById("teacher-list-empty");
+  const raw=document.getElementById("t-srch")?document.getElementById("t-srch").value:"";
+  const q2=normalizeAr(raw);
+  const fg=document.getElementById("t-flt-gender")?document.getElementById("t-flt-gender").value:"";
+  let rows=TDB.filter(t=>{
+    if(q2){const fields=[t.name,t.surname,t.job].map(normalizeAr);if(!fields.some(f=>f.includes(q2)))return false;}
+    if(fg&&t.gender!==fg)return false;
+    return true;
+  });
+  // ترتيب أبجدي حسب الاسم والشهرة
+  rows=rows.slice().sort((a,b)=>((a.name||"")+(a.surname||"")).localeCompare((b.name||"")+(b.surname||""),"ar"));
+  if(!rows.length){tbody.innerHTML="";empty.style.display="block";return;}empty.style.display="none";
+  tbody.innerHTML=rows.map((t,i)=>{
+    const gc=t.gender==="ذكر"?"bb":"bp";
+    return`<tr onclick="openTeacherProfile('${t.firestoreId}')"><td>${i+1}</td><td>${t.name} ${t.surname||""}</td><td style="font-size:11px">${t.job||"—"}</td><td><span class="badge ${gc}">${t.gender||"—"}</span></td><td style="font-size:11px">${t.marital||"—"}</td><td>${t.reg||"—"}</td><td onclick="event.stopPropagation()"><div style="display:flex;gap:4px">${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn btn-outline btn-sm" onclick="editTeacher('${t.firestoreId}')"><i class="ti ti-edit"></i></button><button class="btn-red-sm" onclick="deleteTeacher('${t.firestoreId}')"><i class="ti ti-trash"></i></button>`:""}</div></td></tr>`;
+  }).join("");
+};
+function renderTeacherAbsList(t){
+  const abs=(t.absence||[]).slice().reverse();
+  if(!abs.length)return'<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد غيابات مسجّلة</div>';
+  return abs.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<div class="abs-row"><span class="abs-date">${a.date}</span><span class="abs-reason">${a.reason||"—"}</span><span class="abs-type"><span class="badge ${tc}">${a.type}</span></span></div>`;}).join("");
+}
+window.openTeacherProfile=function(fid){
+  const t=TDB.find(x=>x.firestoreId===fid);if(!t)return;
+  const initials=(t.name?.[0]||"")+(t.surname?.[0]||"");
+  document.getElementById("teacher-profile-content").innerHTML=`<div class="profile-wrap">
+    <div class="profile-hdr">
+      <div class="avatar">${initials}</div>
+      <div style="flex:1"><h2>${t.name} ${t.surname||""}</h2><p>${t.job||"—"} | ${t.gender||"—"}</p></div>
+      ${ADMIN_EMAILS.includes(DB_USER_EMAIL)?`<button class="btn btn-outline btn-sm" onclick="editTeacher('${t.firestoreId}')"><i class="ti ti-edit" style="margin-left:3px"></i>تعديل</button><button class="btn-danger btn-sm" onclick="deleteTeacher('${t.firestoreId}')"><i class="ti ti-trash" style="margin-left:3px"></i>حذف</button>`:""}
+    </div>
+    <div class="sec">البيانات الشخصية</div>
+    <div class="info-grid">
+      <div class="ir"><label>الاسم</label><span>${t.name}</span></div>
+      <div class="ir"><label>الشهرة</label><span>${t.surname||"—"}</span></div>
+      <div class="ir"><label>اسم الأب</label><span>${t.father||"—"}</span></div>
+      <div class="ir"><label>اسم الأم وشهرتها</label><span>${t.mother||"—"}</span></div>
+      <div class="ir"><label>تاريخ الولادة</label><span>${t.dob||"—"}</span></div>
+      <div class="ir"><label>مكان الولادة</label><span>${t.birthplace||"—"}</span></div>
+      <div class="ir"><label>القيد</label><span>${t.reg||"—"}</span></div>
+      <div class="ir"><label>الجنس</label><span>${t.gender||"—"}</span></div>
+      <div class="ir"><label>الوضع العائلي</label><span>${t.marital||"—"}</span></div>
+      <div class="ir"><label>عدد الأبناء</label><span>${t.children||"—"}</span></div>
+    </div>
+    <div class="sec">المؤهل العلمي والوظيفة</div>
+    <div class="info-grid">
+      <div class="ir"><label>نوع الشهادة</label><span>${t.degree||"—"}</span></div>
+      <div class="ir"><label>اسم الكلية أو المعهد</label><span>${t.college||"—"}</span></div>
+      <div class="ir"><label>عام الحصول عليها</label><span>${t.degreeYear||"—"}</span></div>
+      <div class="ir"><label>المسمى الوظيفي</label><span>${t.job||"—"}</span></div>
+      ${t.editedAt?`<div class="ir" style="grid-column:1/-1;background:rgba(91,141,238,.08);border-radius:8px;padding:8px 10px"><label><i class="ti ti-edit" style="margin-left:4px;color:var(--accent)"></i>آخر تعديل</label><span>${t.editedAt} — بواسطة: ${t.editedBy}</span></div>`:""}
+    </div>
+    <div class="sec"><i class="ti ti-calendar-off" style="margin-left:5px;color:var(--accent)"></i>تاريخ غياب المدرّس</div>
+    <div class="abs-stats">
+      <div class="asc"><div class="asc-n" style="color:var(--red)">${(t.absence||[]).length}</div><div class="asc-l">إجمالي</div></div>
+      <div class="asc"><div class="asc-n" style="color:var(--amber)">${(t.absence||[]).filter(a=>a.type==="غياب").length}</div><div class="asc-l">غياب كامل</div></div>
+      <div class="asc"><div class="asc-n" style="color:var(--accent)">${(t.absence||[]).filter(a=>a.type==="تأخر").length}</div><div class="asc-l">تأخر</div></div>
+    </div>
+    <div class="abs-form">
+      <div class="fl" style="min-width:110px"><label>التاريخ</label><input type="date" id="ta-date" value="${today()}"></div>
+      <div class="fl" style="min-width:100px"><label>النوع</label><select id="ta-type"><option>غياب</option><option>تأخر</option><option>إذن مسبق</option></select></div>
+      <div class="fl" style="flex:1;min-width:120px"><label>السبب</label><input type="text" id="ta-reason" placeholder="اختياري"></div>
+      <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addTeacherAbsence('${t.firestoreId}')"><i class="ti ti-plus"></i> إضافة</button>
+    </div>
+    <div id="teacher-abs-list-profile">${renderTeacherAbsList(t)}</div>
+  </div>`;
+  window.showPane("teacher-profile");
+};
+window.addTeacherAbsence=async function(fid){
+  const t=TDB.find(x=>x.firestoreId===fid);if(!t)return;
+  const date=document.getElementById("ta-date").value;
+  const type=document.getElementById("ta-type").value;
+  const reason=document.getElementById("ta-reason").value.trim();
+  if(!date){alert("يرجى تحديد التاريخ.");return;}
+  try{
+    await updateDoc(doc(db,"teachers",fid),{absence:[...(t.absence||[]),{date,type,reason}]});
+    document.getElementById("ta-reason").value="";
+    showToast("✅ تم تسجيل الغياب");
+  }catch(e){alert("خطأ: "+e.message);}
+};
+window.showTeacherAbsenceLog=function(){window.showPane("teacher-absence");renderTeacherAbsenceLog();};
+window.renderTeacherAbsenceLog=function renderTeacherAbsenceLog(){
+  const el=document.getElementById("teacher-all-absence-list");if(!el)return;
+  let all=[];
+  TDB.forEach(t=>(t.absence||[]).forEach(a=>all.push({...a,tname:t.name+" "+(t.surname||""),tjob:t.job})));
+  all.sort((a,b)=>b.date.localeCompare(a.date));
+  if(!all.length){el.innerHTML='<div class="empty-state">لا توجد غيابات مسجّلة للمدرسين.</div>';return;}
+  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>الاسم والشهرة</th><th>المسمى الوظيفي</th><th>النوع</th><th>السبب</th></tr></thead><tbody>${all.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<tr><td>${a.date}</td><td>${a.tname}</td><td style="font-size:11px">${a.tjob||"—"}</td><td><span class="badge ${tc}">${a.type}</span></td><td>${a.reason||"—"}</td></tr>`;}).join("")}</tbody></table></div>`;
+};
 </script>
 </body>
 </html>
