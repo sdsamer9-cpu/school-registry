@@ -498,7 +498,8 @@ const firebaseConfig={apiKey:"AIzaSyC-ihYPTU2MfONgCEfF_4Kcdw5uuLSYmcA",authDomai
 const app=initializeApp(firebaseConfig);
 const db=getFirestore(app);
 const auth=getAuth(app);
-const ADMIN_EMAILS = ["sdsamer@gmail.com"];
+const ADMIN_EMAILS = ["sdsamer@gmail.com","alnajemamal288@gmail.com"];
+const ABSENCE_EDITORS = ["sdsamer@gmail.com","alnajemamal288@gmail.com","zeedzeed5906@gmail.com"];
 let DB_USER_EMAIL = "";
 const GRADES=["التحضيري","الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null,currentUserEmail='';
@@ -678,8 +679,42 @@ window.openProfile=function(fid){
   </div>`;
   window.showPane("profile");
 };
-function renderAbsList(s){const abs=(s.absence||[]).slice().reverse();if(!abs.length)return'<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد غيابات مسجّلة</div>';return abs.map(a=>{const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";return`<div class="abs-row"><span class="abs-date">${a.date}</span><span class="abs-reason">${a.reason||"—"}</span><span class="abs-type"><span class="badge ${tc}">${a.type}</span></span></div>`;}).join("");}
+function renderAbsList(s){
+  const abs=(s.absence||[]).slice().reverse();
+  if(!abs.length)return'<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد غيابات مسجّلة</div>';
+  const isAdmin=ABSENCE_EDITORS.includes(DB_USER_EMAIL);
+  const total=(s.absence||[]).length;
+  return abs.map((a,i)=>{
+    const tc=a.type==="غياب"?"br":a.type==="تأخر"?"bb":"ba";
+    const realIdx=total-1-i;
+    const btns=isAdmin?`<span style="display:flex;gap:4px;margin-right:auto">
+      <button onclick="editAbsence('${s.firestoreId}',${realIdx})" style="background:transparent;border:.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit">تعديل</button>
+      <button onclick="deleteAbsence('${s.firestoreId}',${realIdx})" style="background:transparent;border:.5px solid var(--red);color:var(--red);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit">حذف</button>
+    </span>`:'';
+    return`<div class="abs-row" style="flex-wrap:wrap"><span class="abs-date">${a.date}</span><span class="abs-reason">${a.reason||"—"}</span><span class="abs-type"><span class="badge ${tc}">${a.type}</span></span>${btns}</div>`;
+  }).join("");}
 window.addAbsence=async function(fid){const s=DB.find(x=>x.firestoreId===fid);if(!s)return;const date=document.getElementById("pa-date").value;const type=document.getElementById("pa-type").value;const reason=document.getElementById("pa-reason").value.trim();if(!date){alert("يرجى تحديد التاريخ.");return;}try{await updateDoc(doc(db,"students",fid),{absence:[...(s.absence||[]),{date,type,reason}]});document.getElementById("pa-reason").value="";showToast("✅ تم تسجيل الغياب");}catch(e){alert("خطأ: "+e.message);}};
+window.deleteAbsence=async function(fid,idx){
+  if(!ABSENCE_EDITORS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية تعديل الغياب.");return;}
+  if(!confirm("هل تريد حذف هذا الغياب؟"))return;
+  const s=DB.find(x=>x.firestoreId===fid);if(!s)return;
+  const absence=(s.absence||[]).filter((_,i)=>i!==idx);
+  try{await updateDoc(doc(db,"students",fid),{absence});showToast("✅ تم حذف الغياب");window.openProfile(fid);}
+  catch(e){alert("خطأ: "+e.message);}
+};
+window.editAbsence=async function(fid,idx){
+  if(!ABSENCE_EDITORS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية تعديل الغياب.");return;}
+  const s=DB.find(x=>x.firestoreId===fid);if(!s)return;
+  const a=(s.absence||[])[idx];if(!a)return;
+  const newDate=prompt("التاريخ:",a.date);if(newDate===null)return;
+  const newType=prompt("النوع (غياب / تأخر / إذن مسبق):",a.type);if(newType===null)return;
+  const newReason=prompt("السبب:",a.reason||"");if(newReason===null)return;
+  const absence=[...(s.absence||[])];
+  absence[idx]={date:newDate.trim(),type:newType.trim(),reason:newReason.trim(),editedAt:new Date().toLocaleString("ar-SY"),editedBy:DB_USER_EMAIL};
+  try{await updateDoc(doc(db,"students",fid),{absence});showToast("✅ تم تعديل الغياب");window.openProfile(fid);}
+  catch(e){alert("خطأ: "+e.message);}
+};
+
 window.normalizeAr=function normalizeAr(str){return(str||"").replace(/[أإآا]/g,"ا").replace(/[ةه]/g,"ه").replace(/ى/g,"ي").toLowerCase().trim();}
 window.renderList=function renderList(){
   const raw=document.getElementById("srch").value||"";
