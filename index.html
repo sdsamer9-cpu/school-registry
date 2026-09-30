@@ -262,6 +262,10 @@ tr:hover td{background:var(--surface2);cursor:pointer}
     <div class="sec">سجل الغيابات الكاملة</div>
     <div id="all-absence-list"></div>
   </div>
+  <div class="card" id="notes-log-card" style="display:none">
+    <div class="sec"><i class="ti ti-notes" style="margin-left:5px;color:var(--accent)"></i>سجل الملاحظات اليومية</div>
+    <div id="notes-log-list"></div>
+  </div>
 </div>
 
 <!-- قائمة المدرسين -->
@@ -501,6 +505,8 @@ const auth=getAuth(app);
 const ADMIN_EMAILS = ["sdsamer@gmail.com","alnajemamal288@gmail.com"];
 const ABSENCE_EDITORS = ["sdsamer@gmail.com","alnajemamal288@gmail.com","zeedzeed5906@gmail.com"];
 const PROFILE_VIEWERS = ["sdsamer@gmail.com","alnajemamal288@gmail.com","zeedzeed5906@gmail.com"];
+const NOTES_EDITORS = ["sdsamer@gmail.com","zeedzeed5906@gmail.com"];
+const NOTE_CATS = ["مشاغبة","شكوى عدم انتباه","عدم أداء الواجب","عدم إحضار الأدوات","تأخر عن الحصة","تميّز / سلوك إيجابي","تواصل مع ولي الأمر","أخرى"];
 let DB_USER_EMAIL = "";
 const GRADES=["التحضيري","الأول","الثاني","الثالث","الرابع","الخامس","السادس","السابع","الثامن","التاسع","الأول الثانوي العلمي","الثاني الثانوي العلمي","الثالث الثانوي العلمي","الأول الثانوي الأدبي","الثاني الثانوي الأدبي","الثالث الثانوي الأدبي","دراسة حرة"];
 let DB=[],editingId=null,unsubscribe=null,currentUserEmail='';
@@ -677,6 +683,7 @@ window.openProfile=function(fid){
       <button class="btn btn-primary btn-sm" style="align-self:flex-end" onclick="addAbsence('${s.firestoreId}')"><i class="ti ti-plus"></i> إضافة</button>
     </div>
     <div id="abs-list-profile">${renderAbsList(s)}</div>
+    ${NOTES_EDITORS.includes(DB_USER_EMAIL)?`<div class="sec">الملاحظات اليومية</div><div id="notes-list-profile">${renderProfileNotes(s)}</div>`:""}
   </div>`;
   window.showPane("profile");
 };
@@ -713,6 +720,88 @@ window.editAbsence=async function(fid,idx){
   const absence=[...(s.absence||[])];
   absence[idx]={date:newDate.trim(),type:newType.trim(),reason:newReason.trim(),editedAt:new Date().toLocaleString("ar-SY"),editedBy:DB_USER_EMAIL};
   try{await updateDoc(doc(db,"students",fid),{absence});showToast("✅ تم تعديل الغياب");window.openProfile(fid);}
+  catch(e){alert("خطأ: "+e.message);}
+};
+
+
+/* ===== الملاحظات اليومية على الطلاب ===== */
+function escH(v){return String(v==null?"":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function noteCatClass(c){return c==="تميّز / سلوك إيجابي"?"bg":(c==="مشاغبة"||c==="شكوى عدم انتباه")?"br":"ba";}
+function noteCell(s,d){
+  const n=(s.dailyNotes||[]).filter(x=>x.date===d).length;
+  return `<td><button class="btn ${n?"btn-primary":"btn-outline"} btn-sm" onclick="openNotesModal('${s.firestoreId}','${d}')"><i class="ti ti-notes" style="margin-left:3px"></i>${n?`ملاحظات (${n})`:"ملاحظة"}</button></td>`;
+}
+function renderProfileNotes(s){
+  const list=(s.dailyNotes||[]).slice().sort((a,b)=>(b.date+(b.at||"")).localeCompare(a.date+(a.at||"")));
+  if(!list.length)return'<div style="text-align:center;padding:1rem;font-size:13px;color:var(--text3)">لا توجد ملاحظات مسجّلة</div>';
+  return list.map(n=>`<div class="abs-row" style="flex-wrap:wrap"><span class="abs-date">${escH(n.date)}</span><span class="abs-type"><span class="badge ${noteCatClass(n.cat)}">${escH(n.cat)}</span></span><span class="abs-reason" style="flex:1;min-width:140px">${escH(n.text)||"—"}</span><button class="btn btn-outline btn-sm" onclick="openNotesModal('${s.firestoreId}','${escH(n.date)}')">فتح</button></div>`).join("");
+}
+function renderNotesLog(){
+  const card=document.getElementById("notes-log-card");if(!card)return;
+  if(!NOTES_EDITORS.includes(DB_USER_EMAIL)){card.style.display="none";return;}
+  card.style.display="";
+  const all=[];
+  DB.forEach(s=>(s.dailyNotes||[]).forEach(n=>all.push({...n,sname:(s.name||"")+" "+(s.surname||""),sreg:s.reg,sgrade:s.grade,sfid:s.firestoreId})));
+  all.sort((a,b)=>(b.date+(b.at||"")).localeCompare(a.date+(a.at||"")));
+  const el=document.getElementById("notes-log-list");
+  if(!all.length){el.innerHTML='<div class="empty-state">لا توجد ملاحظات مسجّلة.</div>';return;}
+  el.innerHTML=`<div class="tbl-wrap"><table><thead><tr><th>التاريخ</th><th>السجل</th><th>الطالب</th><th>الصف</th><th>التصنيف</th><th>الملاحظة</th><th>بواسطة</th></tr></thead><tbody>${all.map(n=>`<tr><td>${escH(n.date)}</td><td>${escH(n.sreg)}</td><td><span onclick="openNotesModal('${n.sfid}','${escH(n.date)}')" style="cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:2px">${escH(n.sname)}</span></td><td style="font-size:11px">${escH(n.sgrade)}</td><td><span class="badge ${noteCatClass(n.cat)}">${escH(n.cat)}</span></td><td style="max-width:320px">${escH(n.text)}</td><td style="font-size:11px">${escH(n.by)}</td></tr>`).join("")}</tbody></table></div>`;
+}
+let notesCtx=null,editingNoteId=null;
+window.openNotesModal=function(fid,date){
+  if(!NOTES_EDITORS.includes(DB_USER_EMAIL)){alert("ليس لديك صلاحية على الملاحظات.");return;}
+  notesCtx={fid,date};editingNoteId=null;
+  let m=document.getElementById("notes-modal");
+  if(!m){m=document.createElement("div");m.id="notes-modal";m.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:7000;padding:12px";
+    m.onclick=e=>{if(e.target===m)closeNotesModal();};document.body.appendChild(m);}
+  m.style.display="flex";renderNotesModal();
+};
+window.closeNotesModal=function(){const m=document.getElementById("notes-modal");if(m)m.style.display="none";notesCtx=null;editingNoteId=null;};
+function renderNotesModal(){
+  if(!notesCtx)return;
+  const s=DB.find(x=>x.firestoreId===notesCtx.fid);if(!s){closeNotesModal();return;}
+  const d=notesCtx.date;
+  const list=(s.dailyNotes||[]).filter(n=>n.date===d);
+  const ed=editingNoteId?list.find(n=>n.id===editingNoteId):null;
+  const m=document.getElementById("notes-modal");
+  m.innerHTML=`<div style="background:var(--surface);border:.5px solid var(--border2);border-radius:14px;padding:1.25rem;width:520px;max-width:100%;max-height:90vh;overflow:auto;direction:rtl">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:.9rem">
+      <div><div style="font-size:14px;font-weight:600;color:var(--text1)">ملاحظات: ${escH(s.name)} ${escH(s.surname||"")}</div>
+      <div style="font-size:11px;color:var(--text2);margin-top:3px">${escH(s.grade||"")} — يوم ${escH(d)}</div></div>
+      <button class="btn-red-sm" onclick="closeNotesModal()">إغلاق</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:1rem">${list.length?list.map(n=>`<div style="background:var(--bg2);border-radius:8px;padding:8px 10px">
+      <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap"><span class="badge ${noteCatClass(n.cat)}">${escH(n.cat)}</span>
+      <span style="font-size:10px;color:var(--text3);margin-right:auto">${escH(n.by)}${n.editedBy?` — عُدّلت بواسطة ${escH(n.editedBy)}`:""}</span>
+      <button onclick="startEditNote('${n.id}')" style="background:transparent;border:.5px solid var(--accent);color:var(--accent);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit">تعديل</button>
+      <button onclick="deleteNote('${n.id}')" style="background:transparent;border:.5px solid var(--red);color:var(--red);border-radius:6px;padding:2px 8px;font-size:11px;cursor:pointer;font-family:inherit">حذف</button></div>
+      <div style="font-size:13px;color:var(--text1);margin-top:6px;white-space:pre-wrap">${escH(n.text)}</div></div>`).join(""):'<div style="text-align:center;padding:.8rem;font-size:12px;color:var(--text3)">لا توجد ملاحظات لهذا اليوم</div>'}</div>
+    <div class="sec">${ed?"تعديل الملاحظة":"إضافة ملاحظة"}</div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <select id="nm-cat">${NOTE_CATS.map(c=>`<option ${ed&&ed.cat===c?"selected":""}>${c}</option>`).join("")}</select>
+      <textarea id="nm-text" rows="3" placeholder="اكتب الملاحظة..." style="width:100%;padding:8px 10px;border:.5px solid var(--border2);border-radius:8px;background:var(--bg3);color:var(--text1);font-family:inherit;font-size:13px;resize:vertical">${ed?escH(ed.text):""}</textarea>
+      <div style="display:flex;gap:6px"><button class="btn btn-primary btn-sm" onclick="saveNote()">${ed?"تحديث":"إضافة"}</button>${ed?'<button class="btn btn-outline btn-sm" onclick="cancelEditNote()">إلغاء</button>':""}</div>
+    </div></div>`;
+}
+window.startEditNote=function(id){editingNoteId=id;renderNotesModal();};
+window.cancelEditNote=function(){editingNoteId=null;renderNotesModal();};
+window.saveNote=async function(){
+  if(!NOTES_EDITORS.includes(DB_USER_EMAIL)||!notesCtx){alert("ليس لديك صلاحية على الملاحظات.");return;}
+  const s=DB.find(x=>x.firestoreId===notesCtx.fid);if(!s)return;
+  const cat=document.getElementById("nm-cat").value;const text=document.getElementById("nm-text").value.trim();
+  if(!text){alert("يرجى كتابة نص الملاحظة.");return;}
+  const now=new Date().toISOString();let notes=[...(s.dailyNotes||[])];
+  if(editingNoteId){notes=notes.map(n=>n.id===editingNoteId?{...n,cat,text,editedAt:now,editedBy:DB_USER_EMAIL}:n);}
+  else{notes.push({id:Date.now().toString(36)+Math.random().toString(36).slice(2,6),date:notesCtx.date,cat,text,by:DB_USER_EMAIL,at:now});}
+  try{await updateDoc(doc(db,"students",s.firestoreId),{dailyNotes:notes});s.dailyNotes=notes;editingNoteId=null;showToast("✅ تم حفظ الملاحظة");renderNotesModal();}
+  catch(e){alert("خطأ: "+e.message);}
+};
+window.deleteNote=async function(id){
+  if(!NOTES_EDITORS.includes(DB_USER_EMAIL)||!notesCtx){alert("ليس لديك صلاحية على الملاحظات.");return;}
+  if(!confirm("هل تريد حذف هذه الملاحظة؟"))return;
+  const s=DB.find(x=>x.firestoreId===notesCtx.fid);if(!s)return;
+  const notes=(s.dailyNotes||[]).filter(n=>n.id!==id);
+  try{await updateDoc(doc(db,"students",s.firestoreId),{dailyNotes:notes});s.dailyNotes=notes;editingNoteId=null;showToast("✅ تم حذف الملاحظة");renderNotesModal();}
   catch(e){alert("خطأ: "+e.message);}
 };
 
@@ -758,8 +847,9 @@ window.renderAbsence=function renderAbsence(){
   });
   if(!sorted.length){daily.innerHTML='<div class="empty-state">لا يوجد طلاب مطابقون.</div>';}
   else{
-  daily.innerHTML=`<p style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:.75rem"><i class="ti ti-calendar" style="margin-left:5px;color:var(--accent)"></i>تسجيل غياب يوم: ${d}${absGradeFilter?` — الصف: ${absGradeFilter}`:""}</p><div class="tbl-wrap"><table><thead><tr><th>#</th><th>السجل</th><th>الاسم</th><th>الشهرة</th><th>الصف</th><th>الحالة</th><th>السبب</th><th>تسجيل</th></tr></thead><tbody>${sorted.map((s,i)=>{const ex=(s.absence||[]).find(a=>a.date===d);return`<tr><td>${i+1}</td><td>${s.reg}</td><td>${PROFILE_VIEWERS.includes(DB_USER_EMAIL)?`<span onclick="openProfile('${s.firestoreId}')" style="cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:2px">${s.name}</span>`:s.name}</td><td>${s.surname||""}</td><td style="font-size:11px">${s.grade||""}</td><td><select id="abs-t-${s.firestoreId}" style="padding:4px 6px;font-size:12px"><option value="" ${!ex?"selected":""}>حاضر</option><option value="غياب" ${ex&&ex.type==="غياب"?"selected":""}>غياب</option><option value="تأخر" ${ex&&ex.type==="تأخر"?"selected":""}>تأخر</option><option value="إذن مسبق" ${ex&&ex.type==="إذن مسبق"?"selected":""}>إذن مسبق</option></select></td><td><input type="text" id="abs-r-${s.firestoreId}" value="${ex?ex.reason:""}" placeholder="السبب" style="padding:4px 7px;font-size:12px"></td><td><button class="btn btn-primary btn-sm" onclick="saveDayAbsence('${s.firestoreId}','${d}')">حفظ</button></td></tr>`;}).join("")}</tbody></table></div>`;
+  daily.innerHTML=`<p style="font-size:13px;font-weight:500;color:var(--text1);margin-bottom:.75rem"><i class="ti ti-calendar" style="margin-left:5px;color:var(--accent)"></i>تسجيل غياب يوم: ${d}${absGradeFilter?` — الصف: ${absGradeFilter}`:""}</p><div class="tbl-wrap"><table><thead><tr><th>#</th><th>السجل</th><th>الاسم</th><th>الشهرة</th><th>الصف</th><th>الحالة</th><th>السبب</th><th>تسجيل</th>${NOTES_EDITORS.includes(DB_USER_EMAIL)?"<th>ملاحظات</th>":""}</tr></thead><tbody>${sorted.map((s,i)=>{const ex=(s.absence||[]).find(a=>a.date===d);return`<tr><td>${i+1}</td><td>${s.reg}</td><td>${PROFILE_VIEWERS.includes(DB_USER_EMAIL)?`<span onclick="openProfile('${s.firestoreId}')" style="cursor:pointer;color:var(--accent);text-decoration:underline;text-underline-offset:2px">${s.name}</span>`:s.name}</td><td>${s.surname||""}</td><td style="font-size:11px">${s.grade||""}</td><td><select id="abs-t-${s.firestoreId}" style="padding:4px 6px;font-size:12px"><option value="" ${!ex?"selected":""}>حاضر</option><option value="غياب" ${ex&&ex.type==="غياب"?"selected":""}>غياب</option><option value="تأخر" ${ex&&ex.type==="تأخر"?"selected":""}>تأخر</option><option value="إذن مسبق" ${ex&&ex.type==="إذن مسبق"?"selected":""}>إذن مسبق</option></select></td><td><input type="text" id="abs-r-${s.firestoreId}" value="${ex?ex.reason:""}" placeholder="السبب" style="padding:4px 7px;font-size:12px"></td><td><button class="btn btn-primary btn-sm" onclick="saveDayAbsence('${s.firestoreId}','${d}')">حفظ</button></td>${NOTES_EDITORS.includes(DB_USER_EMAIL)?noteCell(s,d):""}</tr>`;}).join("")}</tbody></table></div>`;
   }
+  renderNotesLog();
   const allAbs=document.getElementById("all-absence-list");
   let all=[];
   // Build absence count per student
@@ -856,7 +946,8 @@ window.importExcel=async function(input){
   };
   reader.readAsBinaryString(file);
 };
-window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","رقم المعرف","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.uid||"",s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","رقم المعرف","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.uid,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
+window.exportExcel=function(){if(!DB.length){alert("لا توجد بيانات للتصدير.");return;}const wb=XLSX.utils.book_new();const d1=[["رقم السجل","رقم المعرف","الاسم","الشهرة","اسم الأب","اسم الأم","اسم الجد","الجنس","الديانة","مكان الولادة","تاريخ الولادة","الجنسية","الرقم الوطني","رقم الهاتف","بلد الإقامة","العنوان","الصف","اللغة الأجنبية","وضع الطالب","الصفوف المعادة","مكان القيد","رقم القيد","المحافظة","نتيجة آخر العام","المحاسبة","إجمالي الغيابات","ملاحظات"],...DB.map(s=>[s.reg,s.uid||"",s.name,s.surname,s.father,s.mother,s.grand,s.gender,s.religion,s.birthplace,s.dob,s.nat,s.natid,s.phone,s.country,s.address,s.grade,s.lang,s.status,s.repeat,s.regplace,s.regnum,s.province,s.result,s.accounting,(s.absence||[]).length,s.notes])];const ws1=XLSX.utils.aoa_to_sheet(d1);ws1["!cols"]=[8,12,12,14,16,14,7,9,12,12,10,14,14,12,16,18,10,9,18,14,10,12,20,10,8,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws1,"بيانات الطلاب");const d2=[["رقم السجل","رقم المعرف","الاسم","الشهرة","الصف","التاريخ","نوع الغياب","السبب"],...DB.flatMap(s=>(s.absence||[]).map(a=>[s.reg,s.uid,s.name,s.surname,s.grade,a.date,a.type,a.reason]))];const ws2=XLSX.utils.aoa_to_sheet(d2);ws2["!cols"]=[10,12,12,18,12,12,20].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws2,"سجل الغيابات");if(NOTES_EDITORS.includes(DB_USER_EMAIL)){const d3=[["رقم السجل","الاسم","الشهرة","الصف","التاريخ","التصنيف","الملاحظة","كُتبت بواسطة"],...DB.flatMap(st=>(st.dailyNotes||[]).map(n=>[st.reg,st.name,st.surname,st.grade,n.date,n.cat,n.text,n.by]))];const ws3=XLSX.utils.aoa_to_sheet(d3);ws3["!cols"]=[10,12,14,12,12,18,50,26].map(w=>({wch:w}));XLSX.utils.book_append_sheet(wb,ws3,"الملاحظات اليومية");}
+XLSX.writeFile(wb,"سجل_الطلاب_الشام.xlsx");};
 document.getElementById("abs-date-global").addEventListener("change",window.renderAbsence);
 populateGradeFilter();
 
